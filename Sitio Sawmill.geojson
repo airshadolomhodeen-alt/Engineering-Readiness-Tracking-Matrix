@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "Sitio Sawmill",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": null, "Data": "36 Households" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 124.220612904220403, 7.355614291030665 ], [ 124.221355390391025, 7.355032673395151 ], [ 124.219040128339429, 7.352576002492333 ], [ 124.218814774292525, 7.354046526301388 ], [ 124.220612904220403, 7.355614291030665 ] ] ] ] } }
+]
+}

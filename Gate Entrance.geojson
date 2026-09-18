@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "Gate Entrance",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": null, "automated": null }, "geometry": { "type": "Point", "coordinates": [ 124.222210198200429, 7.353748163996437 ] } },
+{ "type": "Feature", "properties": { "id": null, "automated": null }, "geometry": { "type": "Point", "coordinates": [ 124.222491159418851, 7.35030842681596 ] } },
+{ "type": "Feature", "properties": { "id": null, "automated": null }, "geometry": { "type": "Point", "coordinates": [ 124.226705045570228, 7.338987727146287 ] } },
+{ "type": "Feature", "properties": { "id": null, "automated": null }, "geometry": { "type": "Point", "coordinates": [ 124.22144852367137, 7.353386025342501 ] } }
+]
+}
