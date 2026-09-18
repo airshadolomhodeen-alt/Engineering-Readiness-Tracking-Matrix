@@ -374,7 +374,7 @@ with tab5:
     else:
         st.info("💡 Tip: Place `IMG_1214 (1).jpg` in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
 
-    # --- 6 Stages of Project Cycle Management (PCM) Simulation & Gantt / CPM ---
+    # --- 6 Stages of Project Cycle Management (PCM) Simulation & Robust Gantt / CPM ---
     st.markdown("---")
     st.subheader("🔄 6 Stages of Project Cycle Management (PCM) & PERT-CPM Simulation")
     st.markdown("Comprehensive mapping of the PFEZ-SDPIP 2026–2040 lifecycle covering <b>Programming, Identification, Formulation, Financing, Implementation, and M&E</b> for long-term program sustainability.")
@@ -389,13 +389,39 @@ with tab5:
     ]
     df_pcm = pd.DataFrame(pcm_schedule_data)
 
-    fig_gantt_pcm = px.timeline(
-        df_pcm, x_start="Start", x_finish="Finish", y="Task", color="PCM_Stage",
+    # Use native go.Figure bar trace for robust timeline rendering (bypassing px.timeline version bugs)
+    fig_gantt_pcm = go.Figure()
+    
+    stage_colors = {
+        "1. Programming": "#636efa",
+        "2. Identification": "#ef553b",
+        "3. Formulation": "#00cc96",
+        "4. Financing": "#ab63fa",
+        "5. Implementation": "#ffa15a",
+        "6. Monitoring & Evaluation": "#19d3f3"
+    }
+
+    for idx, row in df_pcm.iterrows():
+        fig_gantt_pcm.add_trace(go.Bar(
+            base=row["Start"],
+            x=[pd.to_datetime(row["Finish"]) - pd.to_datetime(row["Start"])],
+            y=[row["Task"]],
+            orientation='h',
+            name=row["PCM_Stage"],
+            marker=dict(color=stage_colors.get(row["PCM_Stage"], "#ffffff")),
+            hovertemplate=f"<b>{row['Task']}</b><br>Stage: {row['PCM_Stage']}<br>Start: {row['Start']}<br>Finish: {row['Finish']}<br>Duration: {row['Duration_Months']} Months<extra></extra>"
+        ))
+
+    fig_gantt_pcm.update_layout(
         title="<b>PFEZ-SDPIP 6-Stage Project Cycle Management Gantt Timeline (2026–2040)</b>",
-        color_discrete_sequence=px.colors.qualitative.Safe
+        barmode='stack',
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(type='date', title="Timeline"),
+        yaxis=dict(title="PCM Lifecycle Stages", autorange="reversed"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    fig_gantt_pcm.update_yaxes(autorange="reversed")
-    fig_gantt_pcm.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Timeline", yaxis_title="PCM Lifecycle Stages")
+    
     st.plotly_chart(fig_gantt_pcm, use_container_width=True)
 
     col_pcm1, col_pcm2 = st.columns(2)
