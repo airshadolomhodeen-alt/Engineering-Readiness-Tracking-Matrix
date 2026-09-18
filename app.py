@@ -331,16 +331,56 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Location & Masterplan Vision")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Zoning & Masterplan Vision")
+    st.markdown("Interactive GIS Zoning Map mapping out all identified PFEZ masterplan sectors (Existing Operations, Expansion, Port Support, Logistics, and Ecoparks).")
     
-    # Geographic Map Section
-    pfez_coords = pd.DataFrame({
-        'lat': [7.3825],
-        'lon': [124.2811],
-        'Location': ['Polloc Freeport and Economic Zone (PFEZ)'],
-        'Details': ['Strategic Port Terminal & Economic Hub, Parang, Maguindanao del Norte']
-    })
-    st.map(pfez_coords, latitude='lat', longitude='lon', zoom=11, size=50)
+    # --- Masterplan Zoning Data Definition ---
+    zoning_data = [
+        {"Zone": "All Zones (Overview)", "lat": 7.3825, "lon": 124.2811, "zoom": 12, "color": "#00ffcc", "desc": "Full PFEZ 130+ Hectare Freeport & Economic Zone Master Development Area."},
+        {"Zone": "Existing Port Operation Zone", "lat": 7.3850, "lon": 124.2760, "zoom": 15, "color": "#1f77b4", "desc": "Active marginal wharf, transit sheds 1 & 2, and conventional/containerized cargo handling facilities."},
+        {"Zone": "Port Operation Zone (Reclaimed)", "lat": 7.3870, "lon": 124.2785, "zoom": 15, "color": "#aec7e8", "desc": "Proposed reclamation area for expanded berthage, container yards, and heavy equipment staging."},
+        {"Zone": "RORO Port Development Zone", "lat": 7.3830, "lon": 124.2740, "zoom": 15, "color": "#ff7f0e", "desc": "Dedicated Roll-on/Roll-off ramp infrastructure to boost inter-island transport and BIMP-EAGA connectivity."},
+        {"Zone": "Port Support & Commerce Hub", "lat": 7.3800, "lon": 124.2820, "zoom": 15, "color": "#2ca02c", "desc": "Passenger terminal building, amenity block, weighbridge, and administrative support services."},
+        {"Zone": "Freeport Civic & Commerce Hub", "lat": 7.3770, "lon": 124.2850, "zoom": 15, "color": "#d62728", "desc": "Barter trade center, commercial offices, duty-free retail, and investor service center."},
+        {"Zone": "Future Expansion Area", "lat": 7.3730, "lon": 124.2900, "zoom": 15, "color": "#9467bd", "desc": "Strategic land banking for heavy manufacturing, assembly plants, and secondary industrial complexes."},
+        {"Zone": "Administrative Core", "lat": 7.3810, "lon": 124.2835, "zoom": 16, "color": "#8c564b", "desc": "PFEZ Authority Headquarters, REZA offices, and customs processing headquarters."},
+        {"Zone": "Utilities", "lat": 7.3790, "lon": 124.2800, "zoom": 16, "color": "#e377c2", "desc": "Self-generating power plant, water reservoir facility (1,060 cu.m), and wastewater treatment plant."},
+        {"Zone": "Staff Housing Cluster", "lat": 7.3710, "lon": 124.2930, "zoom": 15, "color": "#7f7f7f", "desc": "Residential quarters, dormitories, and community welfare facilities for port and industrial workers."},
+        {"Zone": "Ecogreen Park", "lat": 7.3750, "lon": 124.2870, "zoom": 15, "color": "#bcbd22", "desc": "Green buffer zones, landscaped recreation spaces, and sustainable low-carbon corporate campuses."},
+        {"Zone": "Mangrove Ecopark", "lat": 7.3900, "lon": 124.2700, "zoom": 15, "color": "#17becf", "desc": "Protected coastal mangrove ecosystem and marine biodiversity conservation sanctuary."}
+    ]
+    
+    df_zones = pd.DataFrame(zoning_data)
+    
+    selected_zone_map = st.selectbox(
+        "📍 Select PFEZ Masterplan Zone to Inspect on Map",
+        df_zones['Zone'].tolist(),
+        index=0,
+        key="map_zone_selector"
+    )
+    
+    # Filter coordinates based on selection
+    if selected_zone_map == "All Zones (Overview)":
+        map_df = df_zones.iloc[1:].copy() # show all individual zones
+        current_lat, current_lon, current_zoom = 7.3825, 124.2811, 12
+    else:
+        match_row = df_zones[df_zones['Zone'] == selected_zone_map].iloc[0]
+        map_df = pd.DataFrame([match_row])
+        current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], match_row['zoom']
+
+    # Render Interactive Streamlit Map
+    st.map(map_df, latitude='lat', longitude='lon', zoom=int(current_zoom), size=60)
+    
+    # Display Zone Information Card
+    active_desc = df_zones[df_zones['Zone'] == selected_zone_map]['desc'].values[0]
+    st.markdown(f"""
+        <div style="background: #161b22; padding: 18px; border-radius: 8px; border-left: 5px solid #00ffcc; border: 1px solid #30363d; margin-top: 15px; margin-bottom: 25px;">
+            <h4 style="color: #00ffcc; margin-top: 0; margin-bottom: 8px; font-size: 1.1rem;">📍 Active Zone Profile: {selected_zone_map}</h4>
+            <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">
+                <b>Description & Land-Use Mandate:</b> {active_desc}
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
     st.subheader("🏗️ Master Development Vision 2040 — Interactive Site Integration")
@@ -352,8 +392,9 @@ with tab5:
         masterplan_zoom = st.slider("Masterplan Image Zoom (%)", min_value=50, max_value=200, value=100, step=10, key="masterplan_zoom")
     with m_col2:
         selected_zone_focus = st.selectbox(
-            "Highlight Masterplan Zone",
-            ["All Zones", "Future Expansion Area", "Administrative Core", "Utilities", "Port Support & Commerce Hub", "Ecogreen Park", "Staff Housing Cluster", "Freeport Civic & Commerce Hub", "Existing Port Operation Zone", "Port Operation Zone (Reclaimed)", "RORO Port Development Zone", "Mangrove Ecopark"]
+            "Highlight Masterplan Zone in Graphic",
+            ["All Zones", "Future Expansion Area", "Administrative Core", "Utilities", "Port Support & Commerce Hub", "Ecogreen Park", "Staff Housing Cluster", "Freeport Civic & Commerce Hub", "Existing Port Operation Zone", "Port Operation Zone (Reclaimed)", "RORO Port Development Zone", "Mangrove Ecopark"],
+            key="graphic_zone_focus"
         )
     with m_col3:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -370,7 +411,6 @@ with tab5:
         with open(masterplan_img_filename, "rb") as image_file:
             encoded_masterplan = base64.b64encode(image_file.read()).decode()
             
-        # Determine MIME type dynamically
         mime_type = "image/png" if masterplan_img_filename.lower().endswith('.png') else "image/jpeg"
 
         st.markdown(f'''
