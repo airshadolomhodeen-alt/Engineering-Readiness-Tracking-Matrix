@@ -342,6 +342,14 @@ with tab5:
     st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Multi-Layer GIS Map")
     st.markdown("Interactive aerial satellite view with all your exported QGIS vector layers (Polygons, Lines, and Points) fully integrated.")
     
+    # Custom CSS injection to completely hide Leaflet tile server labels / base layer lists
+    st.markdown("""
+        <style>
+            .leaflet-control-layers-base { display: none !important; }
+            .leaflet-control-layers-separator { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
     # Initialize Folium Map centered on PFEZ with clean custom attribution text
     m = folium.Map(
         location=[7.3825, 124.2811],
@@ -381,7 +389,6 @@ with tab5:
                 
                 fg = folium.FeatureGroup(name=layer_name)
                 
-                # Iterate through individual features to style points and polygons natively
                 for feat in geo_data.get("features", []):
                     geom_type = feat.get("geometry", {}).get("type")
                     coords = feat.get("geometry", {}).get("coordinates")
@@ -390,7 +397,6 @@ with tab5:
                         continue
                         
                     if geom_type in ["Point", "MultiPoint"]:
-                        # Handle point list vs single point coordinate
                         pt_coords = coords[0] if geom_type == "MultiPoint" else coords
                         folium.CircleMarker(
                             location=[pt_coords[1], pt_coords[0]],
@@ -403,7 +409,6 @@ with tab5:
                             tooltip=layer_name
                         ).add_to(fg)
                     else:
-                        # Render polygons and lines normally via standard GeoJson wrapper
                         folium.GeoJson(
                             feat,
                             style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
@@ -417,10 +422,10 @@ with tab5:
                     
                 fg.add_to(m)
             except Exception as e:
-                st.warning(f"Could not parse layer '{layer_name}': {e}")
+                pass
 
-    # Add QGIS-style Layer Control box (expanded so checkboxes are fully visible)
-    folium.LayerControl(collapsed=False).add_to(m)
+    # Add LayerControl set to collapsed=True so it hides the server URL box completely by default
+    folium.LayerControl(collapsed=True).add_to(m)
     
     # Render interactive map inside a professional medium-sized centered column layout
     map_col1, map_col2, map_col3 = st.columns([1, 8, 1])
