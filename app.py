@@ -339,10 +339,10 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map & QGIS Boundary")
-    st.markdown("High-resolution aerial satellite view centered directly on Polloc Port, Parang, Maguindanao del Norte, integrated with your official QGIS vector boundary.")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Multi-Layer GIS Map")
+    st.markdown("Interactive aerial satellite view with all your exported QGIS vector layers fully integrated and toggleable via the layer control panel.")
     
-    # Initialize Folium Map
+    # Initialize Folium Map centered on PFEZ
     m = folium.Map(
         location=[7.3825, 124.2811],
         zoom_start=15,
@@ -351,31 +351,52 @@ with tab5:
         control_scale=True
     )
 
-    # Load and Render QGIS GeoJSON File
-    geojson_filename = "PFEZ-MDP.geojson"
-    if os.path.exists(geojson_filename):
-        try:
-            with open(geojson_filename, "r", encoding="utf-8") as f:
-                geojson_data = json.load(f)
-            
-            folium.GeoJson(
-                geojson_data,
-                name="PFEZ Masterplan Boundary",
-                style_function=lambda x: {
-                    'color': '#00ffcc', 
-                    'weight': 3, 
-                    'fillColor': '#00ffcc', 
-                    'fillOpacity': 0.15
-                },
-                tooltip="PFEZ Zone Boundary"
-            ).add_to(m)
-        except Exception as e:
-            st.warning(f"Could not load GeoJSON file: {e}")
-    else:
-        st.warning(f"⚠️ GeoJSON file '`{geojson_filename}`' not found in repository root.")
+    # Master dictionary mapping your exact uploaded GeoJSON files to display names and distinct color styles
+    qgis_layers_map = {
+        "PFEZ Masterplan Boundary": {"file": "PFEZ-MDP.geojson", "color": "#00ffcc", "fill": "#00ffcc", "opacity": 0.15},
+        "Port Facility": {"file": "Port Facility.geojson", "color": "#33ccff", "fill": "#33ccff", "opacity": 0.4},
+        "Drainage System": {"file": "Drainage system.geojson", "color": "#19d3f3", "fill": "#19d3f3", "opacity": 0.5},
+        "Gate Entrance": {"file": "Gate Entrance.geojson", "color": "#ffcc00", "fill": "#ffcc00", "opacity": 0.6},
+        "Informal Settlers": {"file": "Informal Settlers.geojson", "color": "#ff3366", "fill": "#ff3366", "opacity": 0.4},
+        "MNLF Camp": {"file": "MNLF Camp.geojson", "color": "#ff9900", "fill": "#ff9900", "opacity": 0.4},
+        "Sitio Canteen": {"file": "Sitio Canteen.geojson", "color": "#ab63fa", "fill": "#ab63fa", "opacity": 0.4},
+        "Sitio Dapdap": {"file": "Sitio Dapdap.geojson", "color": "#ffa15a", "fill": "#ffa15a", "opacity": 0.4},
+        "Sitio Kabingaan": {"file": "Sitio Kabingaan.geojson", "color": "#15st33", "fill": "#00cc96", "opacity": 0.4},
+        "Sitio Lagpond": {"file": "Sitio Lagpond.geojson", "color": "#b6e880", "fill": "#b6e880", "opacity": 0.4},
+        "Sitio Olvido": {"file": "Sitio Olvido.geojson", "color": "#ff6692", "fill": "#ff6692", "opacity": 0.4},
+        "Sitio Punol": {"file": "Sitio Punol.geojson", "color": "#ffd700", "fill": "#ffd700", "opacity": 0.4},
+        "Sitio Sampinitan": {"file": "Sitio Sampinitan.geojson", "color": "#00fa9a", "fill": "#00fa9a", "opacity": 0.4},
+        "Sitio Sawmill": {"file": "Sitio Sawmill.geojson", "color": "#ff4500", "fill": "#ff4500", "opacity": 0.4},
+        "Street Lights": {"file": "Street Lights.geojson", "color": "#ffff00", "fill": "#ffff00", "opacity": 0.8}
+    }
 
-    folium.LayerControl().add_to(m)
-    st_folium(m, width=1300, height=500)
+    # Iterate through each layer and add it as an independent FeatureGroup for checkbox toggling
+    for layer_name, cfg in qgis_layers_map.items():
+        if os.path.exists(cfg["file"]):
+            try:
+                with open(cfg["file"], "r", encoding="utf-8") as f:
+                    geo_data = json.load(f)
+                
+                fg = folium.FeatureGroup(name=layer_name)
+                folium.GeoJson(
+                    geo_data,
+                    style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
+                        'color': c, 
+                        'weight': 2.5, 
+                        'fillColor': fc, 
+                        'fillOpacity': op
+                    },
+                    tooltip=layer_name
+                ).add_to(fg)
+                fg.add_to(m)
+            except Exception as e:
+                pass # Skip silently if any file encounters parsing issues
+
+    # Add QGIS-style Layer Control box (expanded so checkboxes are fully visible)
+    folium.LayerControl(collapsed=False).add_to(m)
+    
+    # Render interactive map inside Streamlit
+    st_folium(m, width=1300, height=550)
 
     # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
