@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 import os
-import base64
+import fitz  # PyMuPDF for robust PDF book viewing
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -128,14 +128,14 @@ if not df_filtered.empty:
 st.sidebar.markdown("---")
 with st.sidebar.expander("🔗 Official Data Repositories"):
     st.markdown("""
-    - [PSA OpenStat](https://openstat.psa.gov.ph)
-    - [Data.BetterGov.ph](https://data.bettergov.ph)
-    - [Data.gov.ph](https://data.gov.ph)
-    - [BSP Statistics](https://www.bsp.gov.ph)
-    - [DBM Philippines](https://www.dbm.gov.ph)
-    - [PSSC Open Data](https://data.pssc.org.ph)
-    - [Data Engineering PH](https://dataengineering.ph)
-    - [OECD Search](https://www.oecd.org)
+    - [PSA OpenStat](https://openstat.psa.gov.ph)[cite: 1]
+    - [Data.BetterGov.ph](https://data.bettergov.ph)[cite: 1]
+    - [Data.gov.ph](https://data.gov.ph)[cite: 1]
+    - [BSP Statistics](https://www.bsp.gov.ph)[cite: 1]
+    - [DBM Philippines](https://www.dbm.gov.ph)[cite: 1]
+    - [PSSC Open Data](https://data.pssc.org.ph)[cite: 1]
+    - [Data Engineering PH](https://dataengineering.ph)[cite: 1]
+    - [OECD Search](https://www.oecd.org)[cite: 1]
     """)
 
 # Sidebar Disclaimer Notice
@@ -208,7 +208,6 @@ with tab2:
         col_reg1, col_reg2 = st.columns(2)
         
         with col_reg1:
-            # Linear Regression Model: CapEx vs IRR
             X = df_filtered[['Estimate_Amount']]
             y = df_filtered['IRR']
             reg = LinearRegression().fit(X, y)
@@ -228,7 +227,6 @@ with tab2:
             st.caption(f"Regression Equation Slope: {reg.coef_[0]:.6f} | Intercept: {reg.intercept_:.2f}")
 
         with col_reg2:
-            # PCA Cluster Plot
             fig_pca = px.scatter(
                 df_filtered, x='PCA_1', y='PCA_2', color='Sector', size='Estimate_Amount',
                 hover_name='Title', title="<b>PCA Cluster Analysis (Financial Variance Projection)</b>",
@@ -261,16 +259,29 @@ with tab3:
 
 with tab4:
     st.subheader("📖 Masterplan Book Viewer (Phase 3 Site Development Plan)")
+    st.markdown("Interactive page-by-page document reader for your uploaded masterplan PDF file.")
+    
     pdf_filename = "PHASE 3 - Site Development Plan and Investment Program.pdf"
     if os.path.exists(pdf_filename):
-        with open(pdf_filename, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-        pdf_display = f'''
-            <iframe src="data:application/pdf;base64,{base64_pdf}#toolbar=1&view=FitH" width="100%" height="750px" type="application/pdf" style="border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></iframe>
-        '''
-        st.markdown(pdf_display, unsafe_allow_html=True)
+        try:
+            doc = fitz.open(pdf_filename)
+            total_pages = len(doc)
+            
+            # Navigation controls for the book reader
+            col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
+            with col_b2:
+                page_num = st.number_input("Select Page Number", min_value=1, max_value=total_pages, value=1, step=1)
+            
+            # Render selected page to image
+            page = doc.load_page(page_num - 1)
+            pix = page.get_pixmap(dpi=150)
+            img_bytes = pix.tobytes("png")
+            
+            st.image(img_bytes, caption=f"Page {page_num} of {total_pages} — {pdf_filename}", use_column_width=True)
+        except Exception as ex:
+            st.error(f"Error reading PDF pages: {ex}")
     else:
-        st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
+        st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory. Please confirm it is committed to GitHub.")
 
 with tab5:
     st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Location")
