@@ -273,7 +273,7 @@ with tab2:
 
 with tab3:
     st.subheader("🔮 10-Year Revenue, DSCR & Capital Drawdown Schedule (2026–2035)")
-    st.markdown("Macroeconomic revenue forecast modeling, debt service coverage profiles, and multi-year capital expenditure burn-rate burn curves.")
+    st.markdown("Macroeconomic revenue forecast modeling, debt service coverage profiles, and multi-year capital expenditure burn-rate curves.")
     
     years = [str(y) for y in range(2026, 2036)]
     base_revenue = 450_000_000.0  
@@ -483,13 +483,13 @@ with tab6:
     folium.LayerControl(collapsed=True).add_to(m)
     
     # Render interactive map maximized to extra-large width and height across full screen layout
-    map_col1, map_col2, map_col3 = st.columns([0.05, 10.9, 0.05])
+    map_col1, map_col2, map_col3 = st.columns([0.02, 0.96, 0.02])
     with map_col2:
         st_folium(m, width=1350, height=720)
 
-    # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
+    # --- Clean Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
-    st.subheader("⚡ Enhanced Gantt Chart & PERT-CPM Critical Path (95 Dataset Projects)")
+    st.subheader("⚡ Enhanced Gantt Chart & PERT-CPM Critical Path")
     st.markdown("Dynamic timeline scheduling and critical path dependency network derived directly from your dataset's implementation phases and CapEx weightings.")
 
     if not df_filtered.empty:
@@ -497,19 +497,31 @@ with tab6:
         
         with col_g1:
             st.markdown("#### 📅 Dynamic Project Portfolio Gantt Chart")
-            gantt_df = df_filtered.head(25).copy()
-            fig_gantt = px.timeline(
-                gantt_df, 
-                x_start=gantt_df['Start_Year'].astype(str) + "-01-01", 
-                x_end=gantt_df['End_Year'].astype(str) + "-12-31", 
-                y='Title', 
-                color='Sector',
-                title="<b>Masterplan Implementation Timeline (Gantt)</b>",
-                color_discrete_sequence=px.colors.qualitative.Bold
-            )
-            fig_gantt.update_yaxes(autorange="reversed")
-            fig_gantt.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Operational Timeline", yaxis_title="")
-            st.plotly_chart(fig_gantt, use_container_width=True)
+            # Filter Gantt to specific sector or top projects to avoid vertical squeezing
+            gantt_sectors = ["All Sectors"] + sorted(df_filtered['Sector'].unique().tolist())
+            selected_gantt_sector = st.selectbox("Filter Gantt Timeline by Sector:", gantt_sectors)
+            
+            gantt_df = df_filtered.copy()
+            if selected_gantt_sector != "All Sectors":
+                gantt_df = gantt_df[gantt_df['Sector'] == selected_gantt_sector]
+            else:
+                gantt_df = gantt_df.head(15)  # Cap at top 15 for clean readability
+                
+            if not gantt_df.empty:
+                fig_gantt = px.timeline(
+                    gantt_df, 
+                    x_start=gantt_df['Start_Year'].astype(str) + "-01-01", 
+                    x_end=gantt_df['End_Year'].astype(str) + "-12-31", 
+                    y='Title', 
+                    color='Sector',
+                    title=f"<b>Masterplan Timeline ({selected_gantt_sector})</b>",
+                    color_discrete_sequence=px.colors.qualitative.Bold
+                )
+                fig_gantt.update_yaxes(autorange="reversed")
+                fig_gantt.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Operational Timeline", yaxis_title="", height=450)
+                st.plotly_chart(fig_gantt, use_container_width=True)
+            else:
+                st.info("No projects match the selected sector for timeline rendering.")
 
         with col_g2:
             st.markdown("#### 🔗 Aggregated PERT-CPM Critical Path Network")
@@ -544,12 +556,12 @@ with tab6:
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 showlegend=False,
-                height=400
+                height=450
             )
             st.plotly_chart(fig_pert, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("📋 Official PFEZ-SDPIP Decision Matrix (All 95 Dataset Projects)")
+    st.subheader("📋 Official PFEZ-SDPIP Institutional Decision Matrix (All 95 Dataset Projects)")
     if not df_filtered.empty:
         disp = df_filtered[['Project_No', 'Title', 'Sector', 'Tier', 'Category', 'Estimate_Amount', 'WACC', 'IRR', 'BCR', 'DSCR', 'Funding_Source']].copy()
         disp['Estimate_Amount'] = disp['Estimate_Amount'].apply(lambda x: f"₱{x:,.2f}" if isinstance(x, (int, float)) else x)
