@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import io
 import os
 import base64
+import json
 import fitz  # PyMuPDF for robust PDF book viewing
 import folium
 from streamlit_folium import st_folium
@@ -338,10 +339,10 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map (Clean Aerial View)")
-    st.markdown("High-resolution aerial satellite view centered directly on Polloc Port, Parang, Maguindanao del Norte.")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map & QGIS Boundary")
+    st.markdown("High-resolution aerial satellite view centered directly on Polloc Port, Parang, Maguindanao del Norte, integrated with your official QGIS vector boundary.")
     
-    # Clean map with zero markers/objects
+    # Initialize Folium Map
     m = folium.Map(
         location=[7.3825, 124.2811],
         zoom_start=15,
@@ -350,6 +351,30 @@ with tab5:
         control_scale=True
     )
 
+    # Load and Render QGIS GeoJSON File
+    geojson_filename = "PFEZ-MDP.geojson"
+    if os.path.exists(geojson_filename):
+        try:
+            with open(geojson_filename, "r", encoding="utf-8") as f:
+                geojson_data = json.load(f)
+            
+            folium.GeoJson(
+                geojson_data,
+                name="PFEZ Masterplan Boundary",
+                style_function=lambda x: {
+                    'color': '#00ffcc', 
+                    'weight': 3, 
+                    'fillColor': '#00ffcc', 
+                    'fillOpacity': 0.15
+                },
+                tooltip="PFEZ Zone Boundary"
+            ).add_to(m)
+        except Exception as e:
+            st.warning(f"Could not load GeoJSON file: {e}")
+    else:
+        st.warning(f"⚠️ GeoJSON file '`{geojson_filename}`' not found in repository root.")
+
+    folium.LayerControl().add_to(m)
     st_folium(m, width=1300, height=500)
 
     # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
