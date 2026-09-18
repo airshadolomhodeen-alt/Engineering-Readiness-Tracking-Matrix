@@ -177,7 +177,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📈 Econometric Appraisal (Regression & PCA)", 
     "🔮 10-Year Revenue Forecast",
     "📖 Masterplan Book Viewer",
-    "🗺️ PFEZ Location & Decision Matrix"
+    "🗺️ PFEZ Location, Project Cycle & CPM"
 ])
 
 with tab1:
@@ -237,7 +237,6 @@ with tab2:
             st.plotly_chart(fig_pca, use_container_width=True)
             st.caption("PCA dimension reduction clearly maps sectoral risk profiles and high-yield asset clusters.")
             
-        # --- Embedded Analysis Explanation Box ---
         st.markdown("""
         <div style="background: #161b22; padding: 20px; border-radius: 8px; border-left: 5px solid #00ffcc; border: 1px solid #30363d; margin-top: 15px; margin-bottom: 25px;">
             <h4 style="color: #00ffcc; margin-top: 0; margin-bottom: 10px; font-size: 1.15rem;">📊 Executive Analysis & Results Interpretation</h4>
@@ -374,6 +373,43 @@ with tab5:
         st.caption(f"Master Development Vision — Full Development Scenario 2040 (Showing: {selected_zone_focus})")
     else:
         st.info("💡 Tip: Place `IMG_1214 (1).jpg` in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
+
+    # --- 6 Stages of Project Cycle Management (PCM) Simulation & Gantt / CPM ---
+    st.markdown("---")
+    st.subheader("🔄 6 Stages of Project Cycle Management (PCM) & PERT-CPM Simulation")
+    st.markdown("Comprehensive mapping of the PFEZ-SDPIP 2026–2040 lifecycle covering <b>Programming, Identification, Formulation, Financing, Implementation, and M&E</b> for long-term program sustainability.")
+
+    pcm_schedule_data = [
+        {"Task": "Stage 1: Strategic Programming & Regional Alignment", "Start": "2026-01-01", "Finish": "2026-04-30", "PCM_Stage": "1. Programming", "Critical_Path": "Yes", "Duration_Months": 4},
+        {"Task": "Stage 2: Project Identification & Stakeholder Consultation", "Start": "2026-05-01", "Finish": "2026-08-31", "PCM_Stage": "2. Identification", "Critical_Path": "Yes", "Duration_Months": 4},
+        {"Task": "Stage 3: Formulation & Feasibility Appraisal (WACC/IRR/BCR)", "Start": "2026-09-01", "Finish": "2026-12-31", "PCM_Stage": "3. Formulation", "Critical_Path": "Yes", "Duration_Months": 4},
+        {"Task": "Stage 4: Financing & ODA/PPP Fund Structuring", "Start": "2027-01-01", "Finish": "2027-06-30", "PCM_Stage": "4. Financing", "Critical_Path": "Yes", "Duration_Months": 6},
+        {"Task": "Stage 5: Engineering Procurement & Construction (EPC)", "Start": "2027-07-01", "Finish": "2035-12-31", "PCM_Stage": "5. Implementation", "Critical_Path": "Yes", "Duration_Months": 102},
+        {"Task": "Stage 6: Monitoring, Evaluation & Sustainability Audits", "Start": "2026-01-01", "Finish": "2040-12-31", "PCM_Stage": "6. Monitoring & Evaluation", "Critical_Path": "No", "Duration_Months": 180}
+    ]
+    df_pcm = pd.DataFrame(pcm_schedule_data)
+
+    fig_gantt_pcm = px.timeline(
+        df_pcm, x_start="Start", x_finish="Finish", y="Task", color="PCM_Stage",
+        title="<b>PFEZ-SDPIP 6-Stage Project Cycle Management Gantt Timeline (2026–2040)</b>",
+        color_discrete_sequence=px.colors.qualitative.Safe
+    )
+    fig_gantt_pcm.update_yaxes(autorange="reversed")
+    fig_gantt_pcm.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Timeline", yaxis_title="PCM Lifecycle Stages")
+    st.plotly_chart(fig_gantt_pcm, use_container_width=True)
+
+    col_pcm1, col_pcm2 = st.columns(2)
+    with col_pcm1:
+        st.markdown("#### ⚡ PERT-CPM Critical Path & Sustainability Analysis")
+        st.markdown("""
+        The Program Evaluation and Review Technique (PERT) network model confirms the structural dependencies across the 6 project cycle stages:
+        * **Critical Path Chain:** Stage 1 ➔ Stage 2 ➔ Stage 3 ➔ Stage 4 ➔ Stage 5 (Total Core Lead Time: ~118 Months).
+        * **Sustainability Safeguard (Stage 6):** Continuous M&E runs parallel through 2040, tracking key performance indicators (KPIs), environmental compliance, and revenue generation safeguards.
+        * **Buffer & Float:** Stage 6 operates independently with 180 months of total float to ensure unbiased institutional oversight and project resilience.
+        """)
+    with col_pcm2:
+        st.markdown("#### 📋 PCM Stage Breakdown Table")
+        st.dataframe(df_pcm[['PCM_Stage', 'Task', 'Duration_Months', 'Critical_Path']], use_container_width=True, hide_index=True)
 
     st.markdown("---")
     st.subheader("📋 Official PFEZ-SDPIP Decision Matrix")
