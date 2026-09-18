@@ -92,6 +92,9 @@ def clean_and_standardize(df, source_type="Masterplan"):
     )
 
   df = df.copy()
+  # Drop duplicate columns if any exist in the raw dataframe
+  df = df.loc[:, ~df.columns.duplicated()]
+
   col_map = {}
   for col in df.columns:
     col_lower = str(col).lower().strip()
@@ -140,7 +143,7 @@ def clean_and_standardize(df, source_type="Masterplan"):
   df["Estimate_Amount"] = df["Estimate_Amount"].fillna(0)
   df["Source"] = source_type
 
-  return df[
+  out_df = df[
       [
           "Project_No",
           "Title",
@@ -150,15 +153,21 @@ def clean_and_standardize(df, source_type="Masterplan"):
           "Source",
           "Funding_Source",
       ]
-  ]
+  ].copy()
+  out_df = out_df.loc[:, ~out_df.columns.duplicated()]
+  return out_df.reset_index(drop=True)
 
 
 df_master_clean = clean_and_standardize(df_master, "Masterplan")
 df_proposals_clean = clean_and_standardize(df_proposals, "New Proposal")
-df_combined = pd.concat(
-    [df_master_clean, df_proposals_clean], ignore_index=True
-)
 
+# Ensure unique indexes and non-overlapping column structures before concatenation
+df_master_clean = df_master_clean.reset_index(drop=True)
+df_proposals_clean = df_proposals_clean.reset_index(drop=True)
+
+df_combined = pd.concat(
+    [df_master_clean, df_proposals_clean], ignore_index=True, axis=0
+)
 
 # Automatic Committee Mapping
 def assign_committee(row):
