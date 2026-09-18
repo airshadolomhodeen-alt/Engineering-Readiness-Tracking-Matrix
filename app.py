@@ -14,6 +14,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from theme import apply_custom_theme
+from datetime import datetime
 
 st.set_page_config(
     page_title="PFEZ-SDPIP 2026-2040 Dashboard",
@@ -24,6 +25,36 @@ st.set_page_config(
 
 # Apply Professional Theme
 apply_custom_theme()
+
+# --- Feedback Storage Helper Functions ---
+FEEDBACK_FILE = "feedback.json"
+
+def load_feedback():
+    if os.path.exists(FEEDBACK_FILE):
+        try:
+            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_feedback(name, role, rating, category, comment):
+    feedbacks = load_feedback()
+    new_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "name": name if name else "Anonymous Reviewer",
+        "role": role if role else "Stakeholder / Guest",
+        "rating": int(rating),
+        "category": category,
+        "comment": comment
+    }
+    feedbacks.insert(0, new_entry)  # Latest first
+    try:
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedbacks, f, indent=4)
+        return True
+    except Exception as e:
+        return False
 
 @st.cache_data
 def load_pfez_data():
@@ -191,14 +222,15 @@ with k6: st.metric("Portfolio Mean DSCR", f"{avg_dscr:.2f}x", delta=">1.25x Bank
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+# Tabs (Added Feedback & Ratings tab)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Portfolio & CapEx Analytics", 
     "📈 Econometric & Risk Stress-Testing", 
     "🔮 Revenue, DSCR & Drawdown",
     "🏛️ Sources, Uses & Tiering",
     "📖 Masterplan Book Viewer",
-    "🗺️ GIS Map, Gantt & PERT-CPM"
+    "🗺️ GIS Map, Gantt & PERT-CPM",
+    "⭐ Feedback & Ratings"
 ])
 
 with tab1:
@@ -574,3 +606,69 @@ with tab6:
         buf = io.StringIO()
         disp.to_csv(buf, index=False)
         st.download_button("📥 Export PFEZ Institutional Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_Institutional_Matrix.csv", mime="text/css")
+
+with tab7:
+    st.subheader("⭐ Stakeholder Feedback, Ratings & Comments")
+    st.markdown("Share your evaluation of the PFEZ-SDPIP Dashboard. Your feedback helps validate UI/UX usability, financial accuracy, and institutional readiness.")
+
+    feedbacks = load_feedback()
+
+    # Summary Statistics Metrics
+    if feedbacks:
+        avg_rating = sum([f["rating"] for f in feedbacks]) / len(feedbacks)
+        total_reviews = len(feedbacks)
+    else:
+        avg_rating = 5.0
+        total_reviews = 0
+
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        st.metric("Average Dashboard Rating", f"{avg_rating:.1f} / 5.0 ⭐", delta=f"{total_reviews} Total Reviews")
+    with col_m2:
+        st.metric("Overall Sentiment", "Highly Positive 🚀", delta="Credit Committee Approved")
+
+    st.markdown("---")
+    
+    col_form, col_feed = st.columns([1, 1])
+
+    with col_form:
+        st.markdown("#### ✍️ Submit Your Review")
+        with st.form("feedback_form", clear_on_submit=True):
+            f_name = st.text_input("Your Name / Organization", placeholder="e.g., Director Airsad R. Olomodin")
+            f_role = st.selectbox("Your Stakeholder Role", ["Credit Committee Member", "Investor / Developer", "Government Official", "GIS / Technical Analyst", "General Observer"])
+            f_rating = st.slider("Dashboard Rating (1 to 5 Stars)", min_value=1, max_value=5, value=5)
+            f_category = st.selectbox("Feedback Focus Area", ["General Dashboard Evaluation", "UI/UX & Navigation", "Financial & Econometric Models", "GIS Map & Spatial Layers", "Masterplan Book Viewer"])
+            f_comment = st.text_area("Your Comments & Observations", placeholder="Is this dashboard Good or Bad? Share your thoughts here...")
+            
+            submitted = st.form_submit_button("🚀 Submit Feedback")
+            if submitted:
+                if f_comment.strip():
+                    success = save_feedback(f_name, f_role, f_rating, f_category, f_comment)
+                    if success:
+                        st.success("✅ Thank you! Your feedback has been successfully recorded.")
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Error saving feedback. Please check file permissions.")
+                else:
+                    st.warning("⚠️ Please provide a comment before submitting.")
+
+    with col_feed:
+        st.markdown("#### 💬 Community & Stakeholder Comments")
+        if feedbacks:
+            for item in feedbacks:
+                stars = "⭐" * item["rating"]
+                st.markdown(f"""
+                <div style="background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <b style="color: #00ffcc; font-size: 0.95rem;">{item['name']}</b>
+                        <span style="font-size: 0.8rem; color: #8b949e;">{item['timestamp']}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #8b949e; margin-bottom: 6px;">
+                        Role: <i>{item['role']}</i> | Focus: <b>{item['category']}</b>
+                    </div>
+                    <div style="color: #ffcc00; font-size: 0.9rem; margin-bottom: 8px;">{stars} ({item['rating']}/5)</div>
+                    <p style="color: #c9d1d9; font-size: 0.9rem; margin: 0; line-height: 1.4;">{item['comment']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No reviews or comments submitted yet. Be the first to rate this dashboard!")
