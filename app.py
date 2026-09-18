@@ -38,13 +38,23 @@ st.markdown(
 # 2. Data Pipeline & Caching
 @st.cache_data
 def load_data():
-  # Load Masterplan Projects CSV
-  try:
-    df_master = pd.read_csv("MASTERPLAN PROJECTS.csv")
-  except Exception:
+  # Load Masterplan Projects CSV with correct encoding
+  df_master = pd.DataFrame()
+  for enc in ["cp1252", "utf-8", "latin1"]:
+    try:
+      df_master = pd.read_csv("MASTERPLAN PROJECTS.csv", encoding=enc)
+      break
+    except Exception:
+      continue
+  if df_master.empty:
     df_master = pd.DataFrame(
         columns=["Project No.", "Title", "Sector", "Category", "Estimate Amount"]
     )
+
+  # Drop unnamed columns if present
+  df_master = df_master.loc[
+      :, ~df_master.columns.str.contains("^Unnamed", case=False)
+  ]
 
   # Load Multi-sheet Excel Proposals
   proposals_list = []
@@ -71,6 +81,10 @@ def load_data():
         ]
     )
 
+  df_proposals = df_proposals.loc[
+      :, ~df_proposals.columns.str.contains("^Unnamed", case=False)
+  ]
+
   return df_master, df_proposals
 
 
@@ -92,8 +106,8 @@ def clean_and_standardize(df, source_type="Masterplan"):
     )
 
   df = df.copy()
-  # Drop duplicate columns if any exist in the raw dataframe
   df = df.loc[:, ~df.columns.duplicated()]
+  df = df.loc[:, ~df.columns.str.contains("^Unnamed", case=False)]
 
   col_map = {}
   for col in df.columns:
@@ -161,13 +175,13 @@ def clean_and_standardize(df, source_type="Masterplan"):
 df_master_clean = clean_and_standardize(df_master, "Masterplan")
 df_proposals_clean = clean_and_standardize(df_proposals, "New Proposal")
 
-# Ensure unique indexes and non-overlapping column structures before concatenation
 df_master_clean = df_master_clean.reset_index(drop=True)
 df_proposals_clean = df_proposals_clean.reset_index(drop=True)
 
 df_combined = pd.concat(
     [df_master_clean, df_proposals_clean], ignore_index=True, axis=0
 )
+
 
 # Automatic Committee Mapping
 def assign_committee(row):
@@ -363,11 +377,14 @@ with tab2:
         "Estimate_Amount"
     ].replace(0, 1)
 
+    size_arg = (
+        "BCR" if len(sim_df) > 1 and sim_df["BCR"].nunique() > 1 else None
+    )
     fig_econ = px.scatter(
         sim_df,
         x="Estimate_Amount",
         y="Projected_Revenue",
-        size="BCR",
+        size=size_arg,
         color="Sector",
         hover_name="Title",
         title="Project Cost vs. Projected Revenue & BCR Scaling",
