@@ -7,7 +7,7 @@ import io
 from theme import apply_custom_theme
 
 st.set_page_config(
-    page_title="PFEZ-SDPIP 2026-2031 Dashboard",
+    page_title="PFEZ-SDPIP 2026-2040 Dashboard",
     page_icon="⚓",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -38,7 +38,8 @@ def load_pfez_data():
     n_total = 95
     np.random.seed(42)
     weights = np.random.exponential(scale=1.2, size=n_total)
-    amounts = (weights / weights.sum()) * 15_500_000_000.0  # Polloc Freeport Scale 15.5B PHP Target
+    # Strictly aligned to Polloc Freeport Scale 15.5B PHP Target Portfolio
+    amounts = (weights / weights.sum()) * 15_500_000_000.0  
     
     if len(df_master) > 0:
         if len(df_master) >= n_total:
@@ -78,7 +79,7 @@ except Exception as e:
 
 # Sidebar Navigation & Filters
 st.sidebar.markdown("### ⚓ PFEZ-SDPIP Hub")
-st.sidebar.markdown("<p style='font-size:0.85rem; color:#94a3b8;'>Polloc Freeport and Economic Zone Strategic Development & Investment Program (2026-2031).</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size:0.85rem; color:#94a3b8;'>Polloc Freeport and Economic Zone Strategic Development & Investment Program (2026-2040).</p>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 st.sidebar.markdown("#### 🎛️ Strategic Filters")
 
@@ -107,11 +108,25 @@ if not df_filtered.empty:
         (df_filtered['Estimate_Amount'] <= budget_range[1])
     ]
 
-# Executive Header Banner
+# Sidebar Link Repository Integration
+st.sidebar.markdown("---")
+with st.sidebar.expander("🔗 Official Data Repositories"):
+    st.markdown("""
+    - [PSA OpenStat](https://openstat.psa.gov.ph/Home/fbclid/IwcGRvZgFmZGlkFlDp8n7nuS1_97lhihKUiO19pXRKSQtleHRuA2FlbQIxMQBzcnRjBmFwcF9pZAo2NjI4NTY4Mzc5AAEerGsaO9gyOIyftV2cFSTqZOlu2tk_6HCF5TWe8s9AjS9ZiFqg8uWiXHUi0lo_aem_flGT-hssmnHNS3dioaITlA)
+    - [Data.BetterGov.ph](https://data.bettergov.ph/?fbclid=IwdGRjcAUYwuhwZG9mAWZkaWQWUOnzfET0HcFA1JYncnvq7bMAYFwGH2V4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR7T053M4XEcmjoEJ5PiyP5jo6vAMTRF2AILY6zhuEg7NhQS5wvYpLZmHYBP3A_aem_PWungTgg0darST2E7l8skQ)
+    - [Data.gov.ph](https://data.gov.ph/index/home?fbclid=IwVERDUAUYwvdwZG9mAWZkaWQWUOl8-DqeY8oi3kQcxc8C3Oq5OdXAeWV4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR6ex9FoGDKrpbmzvro0ZrNRYb-p-OhVNy9hsLq-tMCtw8OogGy9EF9CUlWi4Q_aem_kolOas5VvcvfM3lpV6fCag)
+    - [BSP Statistics](https://www.bsp.gov.ph/SitePages/Statistics/Statistics.aspx?fbclid=IwdGRjcAUYwwlwZG9mAWZkaWQWUOlVlABwAspPYcA3ITVkLQEJiQtwH2V4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR7pU9o5E3P3fT-CRb9z2WMaBMEKEbOjf-OMbN2kOIMP7OugwFnVppd7HEQBVw_aem_SlENcKGl30jc6UklytsffA)
+    - [DBM Philippines](https://www.dbm.gov.ph/?fbclid=IwdGRjcAUYwypwZG9mAWZkaWQWUOmJmJiliDahnbFRBIkJeGRowMXklGV4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR6l6dMjsMo5IAMFJScHuDLndJqNZKnYMg47nhHuF36c0PDXohKv-uAmJ4-VZQ_aem_Rt9_Vc9bg3HtuCARVSNVaw)
+    - [PSSC Open Data](https://data.pssc.org.ph/docs/open-data-philippines/?fbclid=IwdGRjcAUYw0RwZG9mAWZkaWQWUOmQdO_Trr8i2xAYKgTTMLZxEcO582V4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR54LSFeTSzPAjn6Cfh_5ivTYh91ZTLRNsQ-D8fVkqQt8RtP7zrjIuAGIGrZQg_aem_HoWahJWMBUI8Ooq1FaKRxQ)
+    - [Data Engineering PH](https://dataengineering.ph/datasets.html?fbclid=IwdGRjcAUYw3lwZG9mAWZkaWQWUOl3TEeLd8KiSqwPXpiAQs7taMTeymV4dG4DYWVtAjExAHNydGMGYXBwX2lkCjY2Mjg1NjgzNzkAAR4B_WHFsgWrKTFCH57iRa_x7TLXkyRzj6mSroT9qbLvrTFTYIpAcPs62F8XBw_aem_Cb3rus82nlFSogHjNthuWA)
+    - [OECD Search](https://www.oecd.org/en/search.html)
+    """)
+
+# Executive Header Banner (₱15.5B Target Scaling)
 st.markdown("""
     <div class="pfez-header">
         <h1>Polloc Freeport and Economic Zone (PFEZ)</h1>
-        <p>Strategic Development & Investment Program (SDPIP) 2026-2031 — Executive Decision & Financial Forecast Dashboard (₱15.5B Portfolio)</p>
+        <p>Strategic Development & Investment Program (SDPIP) 2026-2040 — Executive Decision & Financial Forecast Dashboard (₱15.5B Portfolio Scale)</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -123,7 +138,7 @@ avg_irr = df_filtered['IRR'].mean() if active_proposals > 0 else 0.0
 avg_bcr = df_filtered['BCR'].mean() if active_proposals > 0 else 0.0
 
 k1, k2, k3, k4, k5 = st.columns(5)
-with k1: st.metric("Total CapEx Portfolio", f"₱{total_capex:,.2f}", delta="2026-2031 Horizon")
+with k1: st.metric("Total CapEx Portfolio", f"₱{total_capex:,.2f}", delta="₱15.5B Baseline")
 with k2: st.metric("Active Projects", f"{active_proposals:,}", delta="Filtered Scope")
 with k3: st.metric("Portfolio WACC", f"{avg_wacc:.2f}%", delta="Hurdle Rate Benchmark")
 with k4: st.metric("Mean Project IRR", f"{avg_irr:.2f}%", delta="Internal Rate of Return")
@@ -135,7 +150,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Portfolio & CapEx Analytics", 
     "📈 Economic Analysis (WACC, IRR, BCR)", 
-    "🔮 2026-2031 Multi-Year Forecast",
+    "🔮 2026-2040 Multi-Year Forecast",
     "📋 PFEZ Masterplan Decision Matrix"
 ])
 
@@ -146,7 +161,7 @@ with tab1:
         with col_a:
             fig_sec = px.pie(
                 df_filtered, names='Sector', values='Estimate_Amount', 
-                title="<b>CapEx Allocation by PFEZ Sector</b>", hole=0.55,
+                title="<b>CapEx Allocation by PFEZ Sector (₱15.5B Scale)</b>", hole=0.55,
                 color_discrete_sequence=px.colors.qualitative.Bold
             )
             fig_sec.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(family="Inter", size=12))
@@ -195,8 +210,8 @@ with tab2:
         st.info("No data available for economic analysis.")
 
 with tab3:
-    st.subheader("PFEZ 2026-2031 Multi-Year Phased Forecast")
-    st.markdown("Projected cash flow outlays and economic multipliers across the three implementation windows of the SDPIP masterplan.")
+    st.subheader("PFEZ Multi-Year Phased Forecast (2026-2040)")
+    st.markdown("Projected cash flow outlays and economic multipliers across the masterplan implementation windows.")
     
     if not df_filtered.empty:
         phase_summary = df_filtered.groupby('Category').agg(
@@ -208,7 +223,7 @@ with tab3:
         
         fig_timeline = px.bar(
             phase_summary, x='Category', y='Total_CapEx', color='Category',
-            title="<b>Capital Outlay by Implementation Phase (2026-2031)</b>",
+            title="<b>Capital Outlay by Implementation Phase (₱15.5B Total Target)</b>",
             text_auto='.2s', color_discrete_sequence=px.colors.qualitative.Bold
         )
         fig_timeline.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False, xaxis_title="Implementation Phase", yaxis_title="Total CapEx (PHP)")
@@ -232,6 +247,6 @@ with tab4:
         
         buf = io.StringIO()
         disp.to_csv(buf, index=False)
-        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_2026_2031_Executive_Matrix.csv", mime="text/css")
+        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_2026_2040_Executive_Matrix.csv", mime="text/css")
     else:
         st.info("No records match the current filter criteria.")
