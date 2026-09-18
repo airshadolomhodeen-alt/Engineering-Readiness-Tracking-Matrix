@@ -177,7 +177,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📈 Econometric Appraisal (Regression & PCA)", 
     "🔮 10-Year Revenue Forecast",
     "📖 Masterplan Book Viewer",
-    "🗺️ PFEZ Location, Project Cycle & CPM"
+    "🗺️ PFEZ Location, Project Cycle & PERT-CPM"
 ])
 
 with tab1:
@@ -374,68 +374,96 @@ with tab5:
     else:
         st.info("💡 Tip: Place `IMG_1214 (1).jpg` in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
 
-    # --- 6 Stages of Project Cycle Management (PCM) Simulation & Robust Gantt / CPM ---
+    # --- PERT-CPM Critical Path Network Diagram for 6 Stages of PCM ---
     st.markdown("---")
-    st.subheader("🔄 6 Stages of Project Cycle Management (PCM) & PERT-CPM Simulation")
-    st.markdown("Comprehensive mapping of the PFEZ-SDPIP 2026–2040 lifecycle covering <b>Programming, Identification, Formulation, Financing, Implementation, and M&E</b> for long-term program sustainability.")
+    st.subheader("⚡ PFEZ-SDPIP PERT-CPM Critical Path Network (Project Cycle Management)")
+    st.markdown("Directed network flow chart illustrating sequential dependencies, critical path nodes, and the Stage 6 Monitoring & Evaluation continuous audit feedback loop.")
 
-    pcm_schedule_data = [
-        {"Task": "Stage 1: Strategic Programming & Regional Alignment", "Start": "2026-01-01", "Finish": "2026-04-30", "PCM_Stage": "1. Programming", "Critical_Path": "Yes", "Duration_Months": 4},
-        {"Task": "Stage 2: Project Identification & Stakeholder Consultation", "Start": "2026-05-01", "Finish": "2026-08-31", "PCM_Stage": "2. Identification", "Critical_Path": "Yes", "Duration_Months": 4},
-        {"Task": "Stage 3: Formulation & Feasibility Appraisal (WACC/IRR/BCR)", "Start": "2026-09-01", "Finish": "2026-12-31", "PCM_Stage": "3. Formulation", "Critical_Path": "Yes", "Duration_Months": 4},
-        {"Task": "Stage 4: Financing & ODA/PPP Fund Structuring", "Start": "2027-01-01", "Finish": "2027-06-30", "PCM_Stage": "4. Financing", "Critical_Path": "Yes", "Duration_Months": 6},
-        {"Task": "Stage 5: Engineering Procurement & Construction (EPC)", "Start": "2027-07-01", "Finish": "2035-12-31", "PCM_Stage": "5. Implementation", "Critical_Path": "Yes", "Duration_Months": 102},
-        {"Task": "Stage 6: Monitoring, Evaluation & Sustainability Audits", "Start": "2026-01-01", "Finish": "2040-12-31", "PCM_Stage": "6. Monitoring & Evaluation", "Critical_Path": "No", "Duration_Months": 180}
-    ]
-    df_pcm = pd.DataFrame(pcm_schedule_data)
-
-    # Use native go.Figure bar trace for robust timeline rendering (bypassing px.timeline version bugs)
-    fig_gantt_pcm = go.Figure()
-    
-    stage_colors = {
-        "1. Programming": "#636efa",
-        "2. Identification": "#ef553b",
-        "3. Formulation": "#00cc96",
-        "4. Financing": "#ab63fa",
-        "5. Implementation": "#ffa15a",
-        "6. Monitoring & Evaluation": "#19d3f3"
+    # Define PERT-CPM Node Coordinates (X, Y)
+    nodes = {
+        "Stage 1: Programming": {"x": 1, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
+        "Stage 2: Identification": {"x": 2, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
+        "Stage 3: Formulation": {"x": 3, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
+        "Stage 4: Financing": {"x": 4, "y": 2, "duration": "6 Mos", "type": "Critical Path"},
+        "Stage 5: Implementation": {"x": 5, "y": 2, "duration": "102 Mos", "type": "Critical Path"},
+        "Stage 6: M&E (Audit Loop)": {"x": 3, "y": 0.8, "duration": "180 Mos", "type": "Sustainability Loop"}
     }
 
-    for idx, row in df_pcm.iterrows():
-        fig_gantt_pcm.add_trace(go.Bar(
-            base=row["Start"],
-            x=[pd.to_datetime(row["Finish"]) - pd.to_datetime(row["Start"])],
-            y=[row["Task"]],
-            orientation='h',
-            name=row["PCM_Stage"],
-            marker=dict(color=stage_colors.get(row["PCM_Stage"], "#ffffff")),
-            hovertemplate=f"<b>{row['Task']}</b><br>Stage: {row['PCM_Stage']}<br>Start: {row['Start']}<br>Finish: {row['Finish']}<br>Duration: {row['Duration_Months']} Months<extra></extra>"
+    # Edges (Dependencies)
+    edges = [
+        ("Stage 1: Programming", "Stage 2: Identification"),
+        ("Stage 2: Identification", "Stage 3: Formulation"),
+        ("Stage 3: Formulation", "Stage 4: Financing"),
+        ("Stage 4: Financing", "Stage 5: Implementation"),
+        # Feedback audit loops
+        ("Stage 3: Formulation", "Stage 6: M&E (Audit Loop)"),
+        ("Stage 6: M&E (Audit Loop)", "Stage 5: Implementation")
+    ]
+
+    fig_pert = go.Figure()
+
+    # Draw Edges (Arrows/Lines)
+    for edge in edges:
+        p1 = nodes[edge[0]]
+        p2 = nodes[edge[1]]
+        fig_pert.add_trace(go.Scatter(
+            x=[p1["x"], p2["x"], None],
+            y=[p1["y"], p2["y"], None],
+            mode='lines',
+            line=dict(width=3, color='#00ffcc' if edge[0] != "Stage 6: M&E (Audit Loop)" else '#19d3f3', dash='solid' if edge[0] != "Stage 6: M&E (Audit Loop)" else 'dash'),
+            hoverinfo='none',
+            showlegend=False
         ))
 
-    fig_gantt_pcm.update_layout(
-        title="<b>PFEZ-SDPIP 6-Stage Project Cycle Management Gantt Timeline (2026–2040)</b>",
-        barmode='stack',
+    # Draw Nodes
+    node_x = [nodes[n]["x"] for n in nodes]
+    node_y = [nodes[n]["y"] for n in nodes]
+    node_text = [f"<b>{n}</b><br>Duration: {nodes[n]['duration']}<br>Type: {nodes[n]['type']}" for n in nodes]
+    node_colors = ['#ff5733' if nodes[n]['type'] == 'Critical Path' else '#19d3f3' for n in nodes]
+
+    fig_pert.add_trace(go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode='markers+text',
+        text=[n.split(':')[0] for n in nodes],
+        textposition="top center",
+        hoverinfo='text',
+        hovertext=node_text,
+        marker=dict(size=45, color=node_colors, line=dict(width=2, color='#ffffff'))
+    ))
+
+    fig_pert.update_layout(
+        title="<b>PERT-CPM Network Diagram — 6 Stages of Project Cycle Management</b>",
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(type='date', title="Timeline"),
-        yaxis=dict(title="PCM Lifecycle Stages", autorange="reversed"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        showlegend=False,
+        height=450
     )
-    
-    st.plotly_chart(fig_gantt_pcm, use_container_width=True)
 
-    col_pcm1, col_pcm2 = st.columns(2)
-    with col_pcm1:
-        st.markdown("#### ⚡ PERT-CPM Critical Path & Sustainability Analysis")
+    st.plotly_chart(fig_pert, use_container_width=True)
+
+    col_cpm1, col_cpm2 = st.columns(2)
+    with col_cpm1:
+        st.markdown("#### ⚡ PERT-CPM Critical Path Analysis")
         st.markdown("""
-        The Program Evaluation and Review Technique (PERT) network model confirms the structural dependencies across the 6 project cycle stages:
-        * **Critical Path Chain:** Stage 1 ➔ Stage 2 ➔ Stage 3 ➔ Stage 4 ➔ Stage 5 (Total Core Lead Time: ~118 Months).
-        * **Sustainability Safeguard (Stage 6):** Continuous M&E runs parallel through 2040, tracking key performance indicators (KPIs), environmental compliance, and revenue generation safeguards.
-        * **Buffer & Float:** Stage 6 operates independently with 180 months of total float to ensure unbiased institutional oversight and project resilience.
+        * **Critical Path Chain:** Stage 1 (Programming) ➔ Stage 2 (Identification) ➔ Stage 3 (Formulation) ➔ Stage 4 (Financing) ➔ Stage 5 (Implementation).
+        * **Total Lead Time:** ~118 months of rigorous project cycle execution.
+        * **Sustainability Loop:** Stage 6 provides continuous Monitoring, Evaluation & Audits across all phases to safeguard program longevity through 2040.
         """)
-    with col_pcm2:
+    with col_cpm2:
         st.markdown("#### 📋 PCM Stage Breakdown Table")
-        st.dataframe(df_pcm[['PCM_Stage', 'Task', 'Duration_Months', 'Critical_Path']], use_container_width=True, hide_index=True)
+        pcm_schedule_data = [
+            {"PCM_Stage": "1. Programming", "Task": "Strategic Programming & Regional Alignment", "Duration_Months": 4, "Critical_Path": "Yes"},
+            {"PCM_Stage": "2. Identification", "Task": "Project Identification & Stakeholder Consultation", "Duration_Months": 4, "Critical_Path": "Yes"},
+            {"PCM_Stage": "3. Formulation", "Task": "Formulation & Feasibility Appraisal (WACC/IRR/BCR)", "Duration_Months": 4, "Critical_Path": "Yes"},
+            {"PCM_Stage": "4. Financing", "Task": "Financing & ODA/PPP Fund Structuring", "Duration_Months": 6, "Critical_Path": "Yes"},
+            {"PCM_Stage": "5. Implementation", "Task": "Engineering Procurement & Construction (EPC)", "Duration_Months": 102, "Critical_Path": "Yes"},
+            {"PCM_Stage": "6. M&E", "Task": "Monitoring, Evaluation & Sustainability Audits", "Duration_Months": 180, "Critical_Path": "No (Audit Loop)"}
+        ]
+        df_pcm = pd.DataFrame(pcm_schedule_data)
+        st.dataframe(df_pcm, use_container_width=True, hide_index=True)
 
     st.markdown("---")
     st.subheader("📋 Official PFEZ-SDPIP Decision Matrix")
