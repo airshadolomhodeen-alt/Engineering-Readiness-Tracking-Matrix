@@ -138,14 +138,14 @@ if not df_filtered.empty:
 st.sidebar.markdown("---")
 with st.sidebar.expander("🔗 Official Data Repositories"):
     st.markdown("""
-    - [PSA OpenStat](https://openstat.psa.gov.ph)[cite: 1]
-    - [Data.BetterGov.ph](https://data.bettergov.ph)[cite: 1]
-    - [Data.gov.ph](https://data.gov.ph)[cite: 1]
-    - [BSP Statistics](https://www.bsp.gov.ph)[cite: 1]
-    - [DBM Philippines](https://www.dbm.gov.ph)[cite: 1]
-    - [PSSC Open Data](https://data.pssc.org.ph)[cite: 1]
-    - [Data Engineering PH](https://dataengineering.ph)[cite: 1]
-    - [OECD Search](https://www.oecd.org)[cite: 1]
+    - [PSA OpenStat](https://openstat.psa.gov.ph)
+    - [Data.BetterGov.ph](https://data.bettergov.ph)
+    - [Data.gov.ph](https://data.gov.ph)
+    - [BSP Statistics](https://www.bsp.gov.ph)
+    - [DBM Philippines](https://www.dbm.gov.ph)
+    - [PSSC Open Data](https://data.pssc.org.ph)
+    - [Data Engineering PH](https://dataengineering.ph)
+    - [OECD Search](https://www.oecd.org)
     """)
 
 with st.sidebar.expander("⚖️ Disclaimer & Legal Notice"):
@@ -340,7 +340,7 @@ with tab4:
 
 with tab5:
     st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Multi-Layer GIS Map")
-    st.markdown("Interactive aerial satellite view with all your exported QGIS vector layers fully integrated and toggleable via the layer control panel.")
+    st.markdown("Interactive aerial satellite view with all your exported QGIS vector layers (Polygons, Lines, and Points) fully integrated.")
     
     # Initialize Folium Map centered on PFEZ
     m = folium.Map(
@@ -351,46 +351,73 @@ with tab5:
         control_scale=True
     )
 
-    # Master dictionary mapping your exact uploaded GeoJSON files to display names and distinct color styles
+    # Master dictionary mapping files, colors, opacity, and including PFEZ Boundaries
     qgis_layers_map = {
+        "PFEZ Boundaries": {"file": "PFEZ Boundaries.geojson", "color": "#ff00ff", "fill": "#ff00ff", "opacity": 0.15},
         "PFEZ Masterplan Boundary": {"file": "PFEZ-MDP.geojson", "color": "#00ffcc", "fill": "#00ffcc", "opacity": 0.15},
-        "Port Facility": {"file": "Port Facility.geojson", "color": "#33ccff", "fill": "#33ccff", "opacity": 0.4},
+        "Port Facility": {"file": "Port Facility.geojson", "color": "#33ccff", "fill": "#33ccff", "opacity": 0.6},
         "Drainage System": {"file": "Drainage system.geojson", "color": "#19d3f3", "fill": "#19d3f3", "opacity": 0.5},
-        "Gate Entrance": {"file": "Gate Entrance.geojson", "color": "#ffcc00", "fill": "#ffcc00", "opacity": 0.6},
+        "Gate Entrance": {"file": "Gate Entrance.geojson", "color": "#ffcc00", "fill": "#ffcc00", "opacity": 0.8},
         "Informal Settlers": {"file": "Informal Settlers.geojson", "color": "#ff3366", "fill": "#ff3366", "opacity": 0.4},
         "MNLF Camp": {"file": "MNLF Camp.geojson", "color": "#ff9900", "fill": "#ff9900", "opacity": 0.4},
         "Sitio Canteen": {"file": "Sitio Canteen.geojson", "color": "#ab63fa", "fill": "#ab63fa", "opacity": 0.4},
         "Sitio Dapdap": {"file": "Sitio Dapdap.geojson", "color": "#ffa15a", "fill": "#ffa15a", "opacity": 0.4},
-        "Sitio Kabingaan": {"file": "Sitio Kabingaan.geojson", "color": "#15st33", "fill": "#00cc96", "opacity": 0.4},
+        "Sitio Kabingaan": {"file": "Sitio Kabingaan.geojson", "color": "#15bf33", "fill": "#00cc96", "opacity": 0.4},
         "Sitio Lagpond": {"file": "Sitio Lagpond.geojson", "color": "#b6e880", "fill": "#b6e880", "opacity": 0.4},
         "Sitio Olvido": {"file": "Sitio Olvido.geojson", "color": "#ff6692", "fill": "#ff6692", "opacity": 0.4},
         "Sitio Punol": {"file": "Sitio Punol.geojson", "color": "#ffd700", "fill": "#ffd700", "opacity": 0.4},
         "Sitio Sampinitan": {"file": "Sitio Sampinitan.geojson", "color": "#00fa9a", "fill": "#00fa9a", "opacity": 0.4},
         "Sitio Sawmill": {"file": "Sitio Sawmill.geojson", "color": "#ff4500", "fill": "#ff4500", "opacity": 0.4},
-        "Street Lights": {"file": "Street Lights.geojson", "color": "#ffff00", "fill": "#ffff00", "opacity": 0.8}
+        "Street Lights": {"file": "Street Lights.geojson", "color": "#ffff00", "fill": "#ffff00", "opacity": 0.9}
     }
 
-    # Iterate through each layer and add it as an independent FeatureGroup for checkbox toggling
+    # Iterate through each layer and handle Point vs Polygon geometries safely
     for layer_name, cfg in qgis_layers_map.items():
-        if os.path.exists(cfg["file"]):
+        file_path = cfg["file"]
+        if os.path.exists(file_path):
             try:
-                with open(cfg["file"], "r", encoding="utf-8") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     geo_data = json.load(f)
                 
                 fg = folium.FeatureGroup(name=layer_name)
-                folium.GeoJson(
-                    geo_data,
-                    style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
-                        'color': c, 
-                        'weight': 2.5, 
-                        'fillColor': fc, 
-                        'fillOpacity': op
-                    },
-                    tooltip=layer_name
-                ).add_to(fg)
+                
+                # Check if features contain point geometries (like Gate Entrance or Street Lights)
+                has_points = any(
+                    feat.get("geometry", {}).get("type") in ["Point", "MultiPoint"]
+                    for feat in geo_data.get("features", [])
+                )
+                
+                if has_points:
+                    # Render point features explicitly as visible CircleMarkers
+                    folium.GeoJson(
+                        geo_data,
+                        marker_function=lambda feature, latlng: folium.CircleMarker(
+                            location=latlng,
+                            radius=6,
+                            color=cfg["color"],
+                            weight=1.5,
+                            fill=True,
+                            fill_color=cfg["fill"],
+                            fill_opacity=cfg["opacity"],
+                            tooltip=layer_name
+                        )
+                    ).add_to(fg)
+                else:
+                    # Render polygons and lines normally
+                    folium.GeoJson(
+                        geo_data,
+                        style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
+                            'color': c, 
+                            'weight': 2.5, 
+                            'fillColor': fc, 
+                            'fillOpacity': op
+                        },
+                        tooltip=layer_name
+                    ).add_to(fg)
+                    
                 fg.add_to(m)
             except Exception as e:
-                pass # Skip silently if any file encounters parsing issues
+                st.warning(f"Could not parse layer '{layer_name}': {e}")
 
     # Add QGIS-style Layer Control box (expanded so checkboxes are fully visible)
     folium.LayerControl(collapsed=False).add_to(m)
