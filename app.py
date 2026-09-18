@@ -368,30 +368,31 @@ with tab5:
         map_df = pd.DataFrame([match_row])
         current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], match_row['zoom']
 
-    # Render Plotly Mapbox Satellite View (Google Earth Style)
-    fig_map = px.scatter_mapbox(
-        map_df,
-        lat="lat",
-        lon="lon",
-        hover_name="Zone",
-        hover_data=["desc"],
-        color_discrete_sequence=["#00ffcc"],
-        zoom=int(current_zoom),
-        center={"lat": current_lat, "lon": current_lon},
-        height=550
-    )
+    # Render Google Earth Satellite Map using Plotly Figure & ArcGIS World Imagery tiles
+    fig_map = go.Figure(go.Scattermapbox(
+        lat=map_df['lat'],
+        lon=map_df['lon'],
+        mode='markers+text',
+        text=map_df['Zone'],
+        textposition="top right",
+        marker=dict(size=14, color='#00ffcc', symbol='marker')
+    ))
     
-    fig_map.update_traces(marker=dict(size=16, symbol="marker"))
     fig_map.update_layout(
-        mapbox_style="white-bg",
-        mapbox_layers=[{
-            "below": 'traces',
-            "sourcetype": "raster",
-            "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]
-        }],
+        mapbox=dict(
+            style="white-bg",
+            center=dict(lat=current_lat, lon=current_lon),
+            zoom=int(current_zoom),
+            layers=[{
+                "sourcetype": "raster",
+                "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+                "below": "traces"
+            }]
+        ),
         margin={"r":0,"t":0,"l":0,"b":0},
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=550
     )
     
     st.plotly_chart(fig_map, use_container_width=True)
