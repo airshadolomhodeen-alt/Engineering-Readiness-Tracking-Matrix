@@ -331,8 +331,8 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Zoning & Masterplan Vision")
-    st.markdown("Interactive GIS Zoning Map mapping out all identified PFEZ masterplan sectors (Existing Operations, Expansion, Port Support, Logistics, and Ecoparks).")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Zoning & Google Earth Satellite View")
+    st.markdown("High-resolution aerial satellite mapping of all identified PFEZ masterplan zones and infrastructure sectors.")
     
     # --- Masterplan Zoning Data Definition ---
     zoning_data = [
@@ -353,7 +353,7 @@ with tab5:
     df_zones = pd.DataFrame(zoning_data)
     
     selected_zone_map = st.selectbox(
-        "📍 Select PFEZ Masterplan Zone to Inspect on Map",
+        "📍 Select PFEZ Masterplan Zone to Inspect on Satellite Map",
         df_zones['Zone'].tolist(),
         index=0,
         key="map_zone_selector"
@@ -368,59 +368,44 @@ with tab5:
         map_df = pd.DataFrame([match_row])
         current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], match_row['zoom']
 
-    # Render Interactive Streamlit Map
-    st.map(map_df, latitude='lat', longitude='lon', zoom=int(current_zoom), size=60)
+    # Render Plotly Mapbox Satellite View (Google Earth Style)
+    fig_map = px.scatter_mapbox(
+        map_df,
+        lat="lat",
+        lon="lon",
+        hover_name="Zone",
+        hover_data=["desc"],
+        color_discrete_sequence=["#00ffcc"],
+        zoom=int(current_zoom),
+        center={"lat": current_lat, "lon": current_lon},
+        height=550
+    )
+    
+    fig_map.update_traces(marker=dict(size=16, symbol="marker"))
+    fig_map.update_layout(
+        mapbox_style="white-bg",
+        mapbox_layers=[{
+            "below": 'traces',
+            "sourcetype": "raster",
+            "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]
+        }],
+        margin={"r":0,"t":0,"l":0,"b":0},
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    st.plotly_chart(fig_map, use_container_width=True)
     
     # Display Zone Information Card
     active_desc = df_zones[df_zones['Zone'] == selected_zone_map]['desc'].values[0]
     st.markdown(f"""
         <div style="background: #161b22; padding: 18px; border-radius: 8px; border-left: 5px solid #00ffcc; border: 1px solid #30363d; margin-top: 15px; margin-bottom: 25px;">
-            <h4 style="color: #00ffcc; margin-top: 0; margin-bottom: 8px; font-size: 1.1rem;">📍 Active Zone Profile: {selected_zone_map}</h4>
+            <h4 style="color: #00ffcc; margin-top: 0; margin-bottom: 8px; font-size: 1.1rem;">📍 Active Satellite Zone Profile: {selected_zone_map}</h4>
             <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">
                 <b>Description & Land-Use Mandate:</b> {active_desc}
             </p>
         </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    st.subheader("🏗️ Master Development Vision 2040 — Interactive Site Integration")
-    st.markdown("Visualizing the full development scenario layout, zone callouts, and key land use sectors.")
-    
-    # Masterplan Image Integration controls
-    m_col1, m_col2, m_col3 = st.columns([2, 2, 1])
-    with m_col1:
-        masterplan_zoom = st.slider("Masterplan Image Zoom (%)", min_value=50, max_value=200, value=100, step=10, key="masterplan_zoom")
-    with m_col2:
-        selected_zone_focus = st.selectbox(
-            "Highlight Masterplan Zone in Graphic",
-            ["All Zones", "Future Expansion Area", "Administrative Core", "Utilities", "Port Support & Commerce Hub", "Ecogreen Park", "Staff Housing Cluster", "Freeport Civic & Commerce Hub", "Existing Port Operation Zone", "Port Operation Zone (Reclaimed)", "RORO Port Development Zone", "Mangrove Ecopark"],
-            key="graphic_zone_focus"
-        )
-    with m_col3:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f"**Focus:** `{selected_zone_focus}`")
-
-    # Automatically detect masterplan image starting with IMG_1214 (handling .png, .jpg, etc. automatically)
-    masterplan_img_filename = None
-    for filename in os.listdir('.'):
-        if filename.startswith("IMG_1214") and filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            masterplan_img_filename = filename
-            break
-
-    if masterplan_img_filename and os.path.exists(masterplan_img_filename):
-        with open(masterplan_img_filename, "rb") as image_file:
-            encoded_masterplan = base64.b64encode(image_file.read()).decode()
-            
-        mime_type = "image/png" if masterplan_img_filename.lower().endswith('.png') else "image/jpeg"
-
-        st.markdown(f'''
-            <div style="width: 100%; height: 600px; overflow: auto; text-align: center; background: #0e1117; padding: 20px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);">
-                <img src="data:{mime_type};base64,{encoded_masterplan}" style="width: {masterplan_zoom}%; max-width: none; height: auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
-            </div>
-        ''', unsafe_allow_html=True)
-        st.caption(f"Master Development Vision — Full Development Scenario 2040 [Detected File: `{masterplan_img_filename}`] (Showing: {selected_zone_focus})")
-    else:
-        st.info("💡 Tip: Ensure an image file starting with `IMG_1214` (e.g., `IMG_1214.PNG` or `IMG_1214 (1).jpg`) is placed in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
 
     # --- PERT-CPM Critical Path Network Diagram for 6 Stages of PCM ---
     st.markdown("---")
