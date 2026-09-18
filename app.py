@@ -142,7 +142,7 @@ with st.sidebar.expander("🔗 Official Data Repositories"):
 with st.sidebar.expander("⚖️ Disclaimer & Legal Notice"):
     st.markdown("""
     <p style='font-size:0.75rem; color:#94a3b8; line-height: 1.4;'>
-    <b>Disclaimer:</b> The analytics, projections, economic valuations (WACC, IRR, BCR), and regression/PCA models contained within this dashboard are prepared for strategic planning, investment appraisal, and portfolio management guidance only. While modeled using rigorous quantitative frameworks and verified open-source institutional repositories, actual financial outcomes are subject to market volatility, regulatory shifts, macroeconomic fluctuations, and unforeseen environmental or geopolitical risks. The author, <b>ENRG. Airsad R. Olomodin, MBA, CBE</b>, assumes no liability for direct or indirect financial losses incurred through the deployment of these capital expenditure strategies without secondary, project-specific feasibility confirmations.
+    <b>Disclaimer:</b> The analytics, projections, economic valuations (WACC, IRR, BCR), and regression/PCA models contained within this dashboard are prepared for strategic planning, investment appraisal, and portfolio management guidance only. While modeled using rigorous quantitative frameworks and verified open-source institutional repositories[cite: 1], actual financial outcomes are subject to market volatility, regulatory shifts, macroeconomic fluctuations, and unforeseen environmental or geopolitical risks. The author, <b>ENRG. Airsad R. Olomodin, MBA, CBE</b>, assumes no liability for direct or indirect financial losses incurred through the deployment of these capital expenditure strategies without secondary, project-specific feasibility confirmations.
     </p>
     """, unsafe_allow_html=True)
 
@@ -267,17 +267,15 @@ with tab4:
             doc = fitz.open(pdf_filename)
             total_pages = len(doc)
             
-            # Navigation controls for the book reader
             col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
             with col_b2:
                 page_num = st.number_input("Select Page Number", min_value=1, max_value=total_pages, value=1, step=1)
             
-            # Render selected page to image
             page = doc.load_page(page_num - 1)
             pix = page.get_pixmap(dpi=150)
             img_bytes = pix.tobytes("png")
             
-            st.image(img_bytes, caption=f"Page {page_num} of {total_pages} — {pdf_filename}", use_column_width=True)
+            st.image(img_bytes, caption=f"Page {page_num} of {total_pages} — {pdf_filename}", use_container_width=True)
         except Exception as ex:
             st.error(f"Error reading PDF pages: {ex}")
     else:
