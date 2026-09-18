@@ -1,0 +1,7 @@
+project_id,project_name,phase,start_year,end_year,budget_php_m,status,priority_type,funding_modality,risk_level
+P01,Business One-Stop Shop (BOSS) Digitalization,Phase 1 (2026–2030),2026,2028,15.5,In Progress,High Priority,BARMM Appropriations,Low
+P02,RORO Passenger Terminal Modernization,Phase 1 (2026–2030),2027,2030,120.0,Planned,High Priority,National Government,Medium
+P03,Port Reclamation Works & Wharf Expansion,Phase 3 (2032–2038),2032,2037,2200.0,Planned,High Priority,PPP / Private Sector,High
+P04,Water Desalination & Treatment Facility,Phase 2 (2029–2035),2029,2032,450.0,Planned,High Priority,ODA,Medium
+P05,Power Substation Upgrades & Smart Grid,Phase 2 (2029–2035),2030,2033,310.0,Planned,High Priority,Private Sector,Low
+P06,Mangrove Ecopark & Greenbelt Buffer,Phase 4 (2035–2040),2035,2038,45.0,Planned,Environmental,BARMM Appropriations,Low
