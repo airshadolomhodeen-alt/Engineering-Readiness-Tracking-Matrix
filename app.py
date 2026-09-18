@@ -359,20 +359,28 @@ with tab5:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"**Focus:** `{selected_zone_focus}`")
 
-    # Load masterplan image if available
-    masterplan_img_filename = "IMG_1214 (1).jpg"
-    if os.path.exists(masterplan_img_filename):
+    # Automatically detect masterplan image starting with IMG_1214 (handling .png, .jpg, etc. automatically)
+    masterplan_img_filename = None
+    for filename in os.listdir('.'):
+        if filename.startswith("IMG_1214") and filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            masterplan_img_filename = filename
+            break
+
+    if masterplan_img_filename and os.path.exists(masterplan_img_filename):
         with open(masterplan_img_filename, "rb") as image_file:
             encoded_masterplan = base64.b64encode(image_file.read()).decode()
             
+        # Determine MIME type dynamically
+        mime_type = "image/png" if masterplan_img_filename.lower().endswith('.png') else "image/jpeg"
+
         st.markdown(f'''
             <div style="width: 100%; height: 600px; overflow: auto; text-align: center; background: #0e1117; padding: 20px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);">
-                <img src="data:image/jpeg;base64,{encoded_masterplan}" style="width: {masterplan_zoom}%; max-width: none; height: auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+                <img src="data:{mime_type};base64,{encoded_masterplan}" style="width: {masterplan_zoom}%; max-width: none; height: auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
             </div>
         ''', unsafe_allow_html=True)
-        st.caption(f"Master Development Vision — Full Development Scenario 2040 (Showing: {selected_zone_focus})")
+        st.caption(f"Master Development Vision — Full Development Scenario 2040 [Detected File: `{masterplan_img_filename}`] (Showing: {selected_zone_focus})")
     else:
-        st.info("💡 Tip: Place `IMG_1214 (1).jpg` in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
+        st.info("💡 Tip: Ensure an image file starting with `IMG_1214` (e.g., `IMG_1214.PNG` or `IMG_1214 (1).jpg`) is placed in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
 
     # --- PERT-CPM Critical Path Network Diagram for 6 Stages of PCM ---
     st.markdown("---")
