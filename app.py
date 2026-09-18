@@ -48,6 +48,7 @@ def load_data():
             
     if not df_master.empty:
         df_master = df_master.loc[:, ~df_master.columns.str.contains('^Unnamed', case=False)]
+        # Rename FIRST before accessing columns
         df_master = df_master.rename(columns={
             'PROJECT NO.': 'Project_No',
             'PROJECT TITLE': 'Title',
@@ -55,7 +56,10 @@ def load_data():
             'CATEGORY': 'Category',
             'ESTIMATE AMOUNT': 'Estimate_Amount'
         })
-        df_master['Estimate_Amount'] = df_master['Estimate_Amount'].apply(parse_currency)
+        if 'Estimate_Amount' in df_master.columns:
+            df_master['Estimate_Amount'] = df_master['Estimate_Amount'].apply(parse_currency)
+        else:
+            df_master['Estimate_Amount'] = 0.0
         df_master['Source'] = 'Masterplan'
         df_master['Funding_Source'] = 'Masterplan'
     
@@ -65,6 +69,10 @@ def load_data():
         for sheet in excel_file.sheet_names:
             df_sheet = pd.read_excel(excel_file, sheet_name=sheet)
             df_sheet = df_sheet.loc[:, ~df_sheet.columns.str.contains('^Unnamed: 0', case=False)]
+            df_sheet = df_sheet.rename(columns={
+                'Name of Projects': 'Title',
+                'Project Brief Description': 'Category'
+            })
             for col in df_sheet.columns:
                 if 'Cost' in str(col) or 'Cost' in col:
                     df_sheet = df_sheet.rename(columns={col: 'Estimate_Amount'})
