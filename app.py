@@ -138,6 +138,14 @@ with st.sidebar.expander("🔗 Official Data Repositories"):
     - [OECD Search](https://www.oecd.org)
     """)
 
+# Sidebar Disclaimer Notice
+with st.sidebar.expander("⚖️ Disclaimer & Legal Notice"):
+    st.markdown("""
+    <p style='font-size:0.75rem; color:#94a3b8; line-height: 1.4;'>
+    <b>Disclaimer:</b> The analytics, projections, economic valuations (WACC, IRR, BCR), and regression/PCA models contained within this dashboard are prepared for strategic planning, investment appraisal, and portfolio management guidance only. While modeled using rigorous quantitative frameworks and verified open-source institutional repositories, actual financial outcomes are subject to market volatility, regulatory shifts, macroeconomic fluctuations, and unforeseen environmental or geopolitical risks. The author, <b>ENRG. Airsad R. Olomodin, MBA, CBE</b>, assumes no liability for direct or indirect financial losses incurred through the deployment of these capital expenditure strategies without secondary, project-specific feasibility confirmations.
+    </p>
+    """, unsafe_allow_html=True)
+
 # Header Banner
 st.markdown("""
     <div class="pfez-header">
@@ -209,7 +217,7 @@ with tab2:
             fig_reg = px.scatter(
                 df_filtered, x='Estimate_Amount', y='IRR', color='Sector',
                 hover_name='Title', title="<b>Linear Regression: CapEx vs. Project IRR</b>",
-                color_discrete_sequence=px.colors.qualitative.Pristine
+                color_discrete_sequence=px.colors.qualitative.Vivid
             )
             fig_reg.add_trace(go.Scatter(
                 x=df_filtered['Estimate_Amount'], y=df_filtered['IRR_Pred'],
