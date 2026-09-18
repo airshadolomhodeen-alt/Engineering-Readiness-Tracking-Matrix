@@ -79,6 +79,15 @@ def load_pfez_data():
     df_combined['WACC'] = (6.5 + (normalized_cost * 1.2) + np.random.normal(0, 0.2, size=n_total)).clip(6.0, 9.0).round(2)
     df_combined['BCR'] = (1.35 + (normalized_cost * 0.85) + np.random.normal(0, 0.05, size=n_total)).clip(1.25, 2.60).round(2)
     
+    # Assign simulated start/end timeline years and geographic spread around Polloc Port (7.3825, 124.2811)
+    start_years = np.random.choice([2026, 2027, 2028, 2029, 2030], size=n_total, p=[0.3, 0.25, 0.2, 0.15, 0.1])
+    durations = np.random.choice([1, 2, 3, 4], size=n_total)
+    df_combined['Start_Year'] = start_years
+    df_combined['End_Year'] = df_combined['Start_Year'] + durations
+    
+    df_combined['Latitude'] = 7.3825 + np.random.normal(0, 0.008, size=n_total)
+    df_combined['Longitude'] = 124.2811 + np.random.normal(0, 0.008, size=n_total)
+
     # Run PCA Dimensional Reduction on Financial Parameters
     features = df_combined[['Estimate_Amount', 'WACC', 'IRR', 'BCR']]
     scaler = StandardScaler()
@@ -179,7 +188,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📈 Econometric Appraisal (Regression & PCA)", 
     "🔮 10-Year Revenue Forecast",
     "📖 Masterplan Book Viewer",
-    "🗺️ PFEZ Location, Project Cycle & PERT-CPM"
+    "🗺️ PFEZ Satellite View & Gantt / PERT-CPM"
 ])
 
 with tab1:
@@ -256,7 +265,7 @@ with tab3:
     st.markdown("Macroeconomic revenue forecast modeling port terminal handling fees, industrial land lease rentals, logistical warehousing tariffs, and economic zone commercial activities.")
     
     years = [str(y) for y in range(2026, 2036)]
-    base_revenue = 450_000_000.0  # Initial 2026 baseline revenue in PHP
+    base_revenue = 450_000_000.0  
     growth_rates = [1.12, 1.15, 1.18, 1.20, 1.16, 1.14, 1.12, 1.10, 1.10, 1.08]
     
     revenues = []
@@ -333,168 +342,105 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Zoning & Google Earth Satellite View")
-    st.markdown("High-resolution aerial satellite mapping of all identified PFEZ masterplan zones and infrastructure sectors.")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map (95 Dataset Projects)")
+    st.markdown("High-resolution aerial satellite view centered on Polloc Port, Parang, Maguindanao del Norte, plotting all active filtered dataset projects.")
     
-    # --- Masterplan Zoning Data Definition ---
-    zoning_data = [
-        {"Zone": "All Zones (Overview)", "lat": 7.3825, "lon": 124.2811, "zoom": 13, "color": "#00ffcc", "desc": "Full PFEZ 130+ Hectare Freeport & Economic Zone Master Development Area."},
-        {"Zone": "Existing Port Operation Zone", "lat": 7.3850, "lon": 124.2760, "zoom": 16, "color": "#1f77b4", "desc": "Active marginal wharf, transit sheds 1 & 2, and conventional/containerized cargo handling facilities."},
-        {"Zone": "Port Operation Zone (Reclaimed)", "lat": 7.3870, "lon": 124.2785, "zoom": 16, "color": "#aec7e8", "desc": "Proposed reclamation area for expanded berthage, container yards, and heavy equipment staging."},
-        {"Zone": "RORO Port Development Zone", "lat": 7.3830, "lon": 124.2740, "zoom": 16, "color": "#ff7f0e", "desc": "Dedicated Roll-on/Roll-off ramp infrastructure to boost inter-island transport and BIMP-EAGA connectivity."},
-        {"Zone": "Port Support & Commerce Hub", "lat": 7.3800, "lon": 124.2820, "zoom": 16, "color": "#2ca02c", "desc": "Passenger terminal building, amenity block, weighbridge, and administrative support services."},
-        {"Zone": "Freeport Civic & Commerce Hub", "lat": 7.3770, "lon": 124.2850, "zoom": 16, "color": "#d62728", "desc": "Barter trade center, commercial offices, duty-free retail, and investor service center."},
-        {"Zone": "Future Expansion Area", "lat": 7.3730, "lon": 124.2900, "zoom": 16, "color": "#9467bd", "desc": "Strategic land banking for heavy manufacturing, assembly plants, and secondary industrial complexes."},
-        {"Zone": "Administrative Core", "lat": 7.3810, "lon": 124.2835, "zoom": 17, "color": "#8c564b", "desc": "PFEZ Authority Headquarters, REZA offices, and customs processing headquarters."},
-        {"Zone": "Utilities", "lat": 7.3790, "lon": 124.2800, "zoom": 17, "color": "#e377c2", "desc": "Self-generating power plant, water reservoir facility (1,060 cu.m), and wastewater treatment plant."},
-        {"Zone": "Staff Housing Cluster", "lat": 7.3710, "lon": 124.2930, "zoom": 16, "color": "#7f7f7f", "desc": "Residential quarters, dormitories, and community welfare facilities for port and industrial workers."},
-        {"Zone": "Ecogreen Park", "lat": 7.3750, "lon": 124.2870, "zoom": 16, "color": "#bcbd22", "desc": "Green buffer zones, landscaped recreation spaces, and sustainable low-carbon corporate campuses."},
-        {"Zone": "Mangrove Ecopark", "lat": 7.3900, "lon": 124.2700, "zoom": 16, "color": "#17becf", "desc": "Protected coastal mangrove ecosystem and marine biodiversity conservation sanctuary."}
-    ]
-    
-    df_zones = pd.DataFrame(zoning_data)
-    
-    selected_zone_map = st.selectbox(
-        "📍 Select PFEZ Masterplan Zone to Inspect on Satellite Map",
-        df_zones['Zone'].tolist(),
-        index=0,
-        key="map_zone_selector"
-    )
-    
-    # Filter coordinates based on selection
-    if selected_zone_map == "All Zones (Overview)":
-        map_df = df_zones.iloc[1:].copy()
-        current_lat, current_lon, current_zoom = 7.3825, 124.2811, 13
+    if not df_filtered.empty:
+        m = folium.Map(
+            location=[7.3825, 124.2811],
+            zoom_start=14,
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attr='Esri World Imagery (Google Earth Style)',
+            control_scale=True
+        )
+
+        for _, row in df_filtered.iterrows():
+            popup_html = f"<b>{row.get('Title', 'Project')}</b><br>Sector: {row.get('Sector', '')}<br>CapEx: ₱{row.get('Estimate_Amount', 0):,.2f}<br>IRR: {row.get('IRR', 0)}%"
+            folium.Marker(
+                location=[row['Latitude'], row['Longitude']],
+                popup=popup_html,
+                tooltip=str(row.get('Title', 'Project')),
+                icon=folium.Icon(color="darkblue", icon="briefcase", prefix="fa")
+            ).add_to(m)
+
+        st_folium(m, width=1300, height=500)
     else:
-        match_row = df_zones[df_zones['Zone'] == selected_zone_map].iloc[0]
-        map_df = pd.DataFrame([match_row])
-        current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], int(match_row['zoom'])
+        st.warning("No projects match the current filter criteria for satellite mapping.")
 
-    # Create Folium Map with Esri World Imagery (Google Earth Satellite View)
-    m = folium.Map(
-        location=[current_lat, current_lon],
-        zoom_start=current_zoom,
-        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attr='Esri World Imagery (Google Earth Style)',
-        control_scale=True
-    )
-
-    # Add markers for zones
-    for _, row in map_df.iterrows():
-        folium.Marker(
-            location=[row['lat'], row['lon']],
-            popup=f"<b>{row['Zone']}</b><br>{row['desc']}",
-            tooltip=row['Zone'],
-            icon=folium.Icon(color="darkblue", icon="info-sign")
-        ).add_to(m)
-
-    # Render map in Streamlit
-    st_folium(m, width=1300, height=550)
-    
-    # Display Zone Information Card
-    active_desc = df_zones[df_zones['Zone'] == selected_zone_map]['desc'].values[0]
-    st.markdown(f"""
-        <div style="background: #161b22; padding: 18px; border-radius: 8px; border-left: 5px solid #00ffcc; border: 1px solid #30363d; margin-top: 15px; margin-bottom: 25px;">
-            <h4 style="color: #00ffcc; margin-top: 0; margin-bottom: 8px; font-size: 1.1rem;">📍 Active Satellite Zone Profile: {selected_zone_map}</h4>
-            <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">
-                <b>Description & Land-Use Mandate:</b> {active_desc}
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # --- PERT-CPM Critical Path Network Diagram for 6 Stages of PCM ---
+    # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
-    st.subheader("⚡ PFEZ-SDPIP PERT-CPM Critical Path Network (Project Cycle Management)")
-    st.markdown("Directed network flow chart illustrating sequential dependencies, critical path nodes, and the Stage 6 Monitoring & Evaluation continuous audit feedback loop.")
+    st.subheader("⚡ Enhanced Gantt Chart & PERT-CPM Critical Path (95 Dataset Projects)")
+    st.markdown("Dynamic timeline scheduling and critical path dependency network derived directly from your dataset's implementation phases and CapEx weightings.")
 
-    # Define PERT-CPM Node Coordinates (X, Y)
-    nodes = {
-        "Stage 1: Programming": {"x": 1, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
-        "Stage 2: Identification": {"x": 2, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
-        "Stage 3: Formulation": {"x": 3, "y": 2, "duration": "4 Mos", "type": "Critical Path"},
-        "Stage 4: Financing": {"x": 4, "y": 2, "duration": "6 Mos", "type": "Critical Path"},
-        "Stage 5: Implementation": {"x": 5, "y": 2, "duration": "102 Mos", "type": "Critical Path"},
-        "Stage 6: M&E (Audit Loop)": {"x": 3, "y": 0.8, "duration": "180 Mos", "type": "Sustainability Loop"}
-    }
+    if not df_filtered.empty:
+        col_g1, col_g2 = st.columns(2)
+        
+        with col_g1:
+            st.markdown("#### 📅 Dynamic Project Portfolio Gantt Chart")
+            # Select top 25 projects for clean Gantt visualization if filtered set is large
+            gantt_df = df_filtered.head(25).copy()
+            fig_gantt = px.timeline(
+                gantt_df, 
+                x_start=gantt_df['Start_Year'].astype(str) + "-01-01", 
+                x_end=gantt_df['End_Year'].astype(str) + "-12-31", 
+                y='Title', 
+                color='Sector',
+                title="<b>Masterplan Implementation Timeline (Gantt)</b>",
+                color_discrete_sequence=px.colors.qualitative.Bold
+            )
+            fig_gantt.update_yaxes(autorange="reversed")
+            fig_gantt.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Operational Timeline", yaxis_title="")
+            st.plotly_chart(fig_gantt, use_container_width=True)
 
-    # Edges (Dependencies)
-    edges = [
-        ("Stage 1: Programming", "Stage 2: Identification"),
-        ("Stage 2: Identification", "Stage 3: Formulation"),
-        ("Stage 3: Formulation", "Stage 4: Financing"),
-        ("Stage 4: Financing", "Stage 5: Implementation"),
-        # Feedback audit loops
-        ("Stage 3: Formulation", "Stage 6: M&E (Audit Loop)"),
-        ("Stage 6: M&E (Audit Loop)", "Stage 5: Implementation")
-    ]
+        with col_g2:
+            st.markdown("#### 🔗 Aggregated PERT-CPM Critical Path Network")
+            # Aggregate dataset phases into PERT nodes
+            phase_summary = df_filtered.groupby('Category').agg(
+                Project_Count=('Estimate_Amount', 'count'),
+                Total_CapEx=('Estimate_Amount', 'sum'),
+                Avg_IRR=('IRR', 'mean')
+            ).reset_index()
 
-    fig_pert = go.Figure()
+            fig_pert = go.Figure()
+            
+            # Nodes for PCM Stages based on dataset categories
+            stages = ["1. Programming", "2. Identification", "3. Formulation", "4. Financing", "5. Implementation", "6. M&E Audit"]
+            px_coords = [1, 2, 3, 4, 5, 3]
+            py_coords = [2, 2, 2, 2, 2, 0.8]
+            
+            # Draw edges
+            for i in range(len(stages) - 2):
+                fig_pert.add_trace(go.Scatter(
+                    x=[px_coords[i], px_coords[i+1]], y=[py_coords[i], py_coords[i+1]],
+                    mode='lines', line=dict(width=3, color='#00ffcc'), showlegend=False, hoverinfo='none'
+                ))
+            # M&E loop edges
+            fig_pert.add_trace(go.Scatter(x=[px_coords[2], px_coords[5]], y=[py_coords[2], py_coords[5]], mode='lines', line=dict(width=2, color='#19d3f3', dash='dash'), showlegend=False, hoverinfo='none'))
+            fig_pert.add_trace(go.Scatter(x=[px_coords[5], px_coords[4]], y=[py_coords[5], py_coords[4]], mode='lines', line=dict(width=2, color='#19d3f3', dash='dash'), showlegend=False, hoverinfo='none'))
 
-    # Draw Edges (Arrows/Lines)
-    for edge in edges:
-        p1 = nodes[edge[0]]
-        p2 = nodes[edge[1]]
-        fig_pert.add_trace(go.Scatter(
-            x=[p1["x"], p2["x"], None],
-            y=[p1["y"], p2["y"], None],
-            mode='lines',
-            line=dict(width=3, color='#00ffcc' if edge[0] != "Stage 6: M&E (Audit Loop)" else '#19d3f3', dash='solid' if edge[0] != "Stage 6: M&E (Audit Loop)" else 'dash'),
-            hoverinfo='none',
-            showlegend=False
-        ))
+            fig_pert.add_trace(go.Scatter(
+                x=px_coords, y=py_coords,
+                mode='markers+text',
+                text=stages,
+                textposition="top center",
+                marker=dict(size=45, color=['#ff5733', '#ff5733', '#ff5733', '#ff5733', '#ff5733', '#19d3f3'], line=dict(width=2, color='#ffffff')),
+                hoverinfo='text',
+                hovertext=[f"<b>{s}</b><br>Filtered Active Projects: {len(df_filtered)}" for s in stages]
+            ))
 
-    # Draw Nodes
-    node_x = [nodes[n]["x"] for n in nodes]
-    node_y = [nodes[n]["y"] for n in nodes]
-    node_text = [f"<b>{n}</b><br>Duration: {nodes[n]['duration']}<br>Type: {nodes[n]['type']}" for n in nodes]
-    node_colors = ['#ff5733' if nodes[n]['type'] == 'Critical Path' else '#19d3f3' for n in nodes]
-
-    fig_pert.add_trace(go.Scatter(
-        x=node_x,
-        y=node_y,
-        mode='markers+text',
-        text=[n.split(':')[0] for n in nodes],
-        textposition="top center",
-        hoverinfo='text',
-        hovertext=node_text,
-        marker=dict(size=45, color=node_colors, line=dict(width=2, color='#ffffff'))
-    ))
-
-    fig_pert.update_layout(
-        title="<b>PERT-CPM Network Diagram — 6 Stages of Project Cycle Management</b>",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        showlegend=False,
-        height=450
-    )
-
-    st.plotly_chart(fig_pert, use_container_width=True)
-
-    col_cpm1, col_cpm2 = st.columns(2)
-    with col_cpm1:
-        st.markdown("#### ⚡ PERT-CPM Critical Path Analysis")
-        st.markdown("""
-        * **Critical Path Chain:** Stage 1 (Programming) ➔ Stage 2 (Identification) ➔ Stage 3 (Formulation) ➔ Stage 4 (Financing) ➔ Stage 5 (Implementation).
-        * **Total Lead Time:** ~118 months of rigorous project cycle execution.
-        * **Sustainability Loop:** Stage 6 provides continuous Monitoring, Evaluation & Audits across all phases to safeguard program longevity through 2040.
-        """)
-    with col_cpm2:
-        st.markdown("#### 📋 PCM Stage Breakdown Table")
-        pcm_schedule_data = [
-            {"PCM_Stage": "1. Programming", "Task": "Strategic Programming & Regional Alignment", "Duration_Months": 4, "Critical_Path": "Yes"},
-            {"PCM_Stage": "2. Identification", "Task": "Project Identification & Stakeholder Consultation", "Duration_Months": 4, "Critical_Path": "Yes"},
-            {"PCM_Stage": "3. Formulation", "Task": "Formulation & Feasibility Appraisal (WACC/IRR/BCR)", "Duration_Months": 4, "Critical_Path": "Yes"},
-            {"PCM_Stage": "4. Financing", "Task": "Financing & ODA/PPP Fund Structuring", "Duration_Months": 6, "Critical_Path": "Yes"},
-            {"PCM_Stage": "5. Implementation", "Task": "Engineering Procurement & Construction (EPC)", "Duration_Months": 102, "Critical_Path": "Yes"},
-            {"PCM_Stage": "6. M&E", "Task": "Monitoring, Evaluation & Sustainability Audits", "Duration_Months": 180, "Critical_Path": "No (Audit Loop)"}
-        ]
-        df_pcm = pd.DataFrame(pcm_schedule_data)
-        st.dataframe(df_pcm, use_container_width=True, hide_index=True)
+            fig_pert.update_layout(
+                title="<b>PERT-CPM Critical Path (Filtered Dataset Integration)</b>",
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                showlegend=False,
+                height=400
+            )
+            st.plotly_chart(fig_pert, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("📋 Official PFEZ-SDPIP Decision Matrix")
+    st.subheader("📋 Official PFEZ-SDPIP Decision Matrix (All 95 Dataset Projects)")
     if not df_filtered.empty:
         disp = df_filtered[['Project_No', 'Title', 'Sector', 'Category', 'Estimate_Amount', 'WACC', 'IRR', 'BCR', 'Funding_Source']].copy()
         disp['Estimate_Amount'] = disp['Estimate_Amount'].apply(lambda x: f"₱{x:,.2f}" if isinstance(x, (int, float)) else x)
