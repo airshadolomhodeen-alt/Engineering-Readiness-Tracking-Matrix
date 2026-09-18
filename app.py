@@ -7,6 +7,8 @@ import io
 import os
 import base64
 import fitz  # PyMuPDF for robust PDF book viewing
+import folium
+from streamlit_folium import st_folium
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -336,18 +338,18 @@ with tab5:
     
     # --- Masterplan Zoning Data Definition ---
     zoning_data = [
-        {"Zone": "All Zones (Overview)", "lat": 7.3825, "lon": 124.2811, "zoom": 12, "color": "#00ffcc", "desc": "Full PFEZ 130+ Hectare Freeport & Economic Zone Master Development Area."},
-        {"Zone": "Existing Port Operation Zone", "lat": 7.3850, "lon": 124.2760, "zoom": 15, "color": "#1f77b4", "desc": "Active marginal wharf, transit sheds 1 & 2, and conventional/containerized cargo handling facilities."},
-        {"Zone": "Port Operation Zone (Reclaimed)", "lat": 7.3870, "lon": 124.2785, "zoom": 15, "color": "#aec7e8", "desc": "Proposed reclamation area for expanded berthage, container yards, and heavy equipment staging."},
-        {"Zone": "RORO Port Development Zone", "lat": 7.3830, "lon": 124.2740, "zoom": 15, "color": "#ff7f0e", "desc": "Dedicated Roll-on/Roll-off ramp infrastructure to boost inter-island transport and BIMP-EAGA connectivity."},
-        {"Zone": "Port Support & Commerce Hub", "lat": 7.3800, "lon": 124.2820, "zoom": 15, "color": "#2ca02c", "desc": "Passenger terminal building, amenity block, weighbridge, and administrative support services."},
-        {"Zone": "Freeport Civic & Commerce Hub", "lat": 7.3770, "lon": 124.2850, "zoom": 15, "color": "#d62728", "desc": "Barter trade center, commercial offices, duty-free retail, and investor service center."},
-        {"Zone": "Future Expansion Area", "lat": 7.3730, "lon": 124.2900, "zoom": 15, "color": "#9467bd", "desc": "Strategic land banking for heavy manufacturing, assembly plants, and secondary industrial complexes."},
-        {"Zone": "Administrative Core", "lat": 7.3810, "lon": 124.2835, "zoom": 16, "color": "#8c564b", "desc": "PFEZ Authority Headquarters, REZA offices, and customs processing headquarters."},
-        {"Zone": "Utilities", "lat": 7.3790, "lon": 124.2800, "zoom": 16, "color": "#e377c2", "desc": "Self-generating power plant, water reservoir facility (1,060 cu.m), and wastewater treatment plant."},
-        {"Zone": "Staff Housing Cluster", "lat": 7.3710, "lon": 124.2930, "zoom": 15, "color": "#7f7f7f", "desc": "Residential quarters, dormitories, and community welfare facilities for port and industrial workers."},
-        {"Zone": "Ecogreen Park", "lat": 7.3750, "lon": 124.2870, "zoom": 15, "color": "#bcbd22", "desc": "Green buffer zones, landscaped recreation spaces, and sustainable low-carbon corporate campuses."},
-        {"Zone": "Mangrove Ecopark", "lat": 7.3900, "lon": 124.2700, "zoom": 15, "color": "#17becf", "desc": "Protected coastal mangrove ecosystem and marine biodiversity conservation sanctuary."}
+        {"Zone": "All Zones (Overview)", "lat": 7.3825, "lon": 124.2811, "zoom": 13, "color": "#00ffcc", "desc": "Full PFEZ 130+ Hectare Freeport & Economic Zone Master Development Area."},
+        {"Zone": "Existing Port Operation Zone", "lat": 7.3850, "lon": 124.2760, "zoom": 16, "color": "#1f77b4", "desc": "Active marginal wharf, transit sheds 1 & 2, and conventional/containerized cargo handling facilities."},
+        {"Zone": "Port Operation Zone (Reclaimed)", "lat": 7.3870, "lon": 124.2785, "zoom": 16, "color": "#aec7e8", "desc": "Proposed reclamation area for expanded berthage, container yards, and heavy equipment staging."},
+        {"Zone": "RORO Port Development Zone", "lat": 7.3830, "lon": 124.2740, "zoom": 16, "color": "#ff7f0e", "desc": "Dedicated Roll-on/Roll-off ramp infrastructure to boost inter-island transport and BIMP-EAGA connectivity."},
+        {"Zone": "Port Support & Commerce Hub", "lat": 7.3800, "lon": 124.2820, "zoom": 16, "color": "#2ca02c", "desc": "Passenger terminal building, amenity block, weighbridge, and administrative support services."},
+        {"Zone": "Freeport Civic & Commerce Hub", "lat": 7.3770, "lon": 124.2850, "zoom": 16, "color": "#d62728", "desc": "Barter trade center, commercial offices, duty-free retail, and investor service center."},
+        {"Zone": "Future Expansion Area", "lat": 7.3730, "lon": 124.2900, "zoom": 16, "color": "#9467bd", "desc": "Strategic land banking for heavy manufacturing, assembly plants, and secondary industrial complexes."},
+        {"Zone": "Administrative Core", "lat": 7.3810, "lon": 124.2835, "zoom": 17, "color": "#8c564b", "desc": "PFEZ Authority Headquarters, REZA offices, and customs processing headquarters."},
+        {"Zone": "Utilities", "lat": 7.3790, "lon": 124.2800, "zoom": 17, "color": "#e377c2", "desc": "Self-generating power plant, water reservoir facility (1,060 cu.m), and wastewater treatment plant."},
+        {"Zone": "Staff Housing Cluster", "lat": 7.3710, "lon": 124.2930, "zoom": 16, "color": "#7f7f7f", "desc": "Residential quarters, dormitories, and community welfare facilities for port and industrial workers."},
+        {"Zone": "Ecogreen Park", "lat": 7.3750, "lon": 124.2870, "zoom": 16, "color": "#bcbd22", "desc": "Green buffer zones, landscaped recreation spaces, and sustainable low-carbon corporate campuses."},
+        {"Zone": "Mangrove Ecopark", "lat": 7.3900, "lon": 124.2700, "zoom": 16, "color": "#17becf", "desc": "Protected coastal mangrove ecosystem and marine biodiversity conservation sanctuary."}
     ]
     
     df_zones = pd.DataFrame(zoning_data)
@@ -361,41 +363,33 @@ with tab5:
     
     # Filter coordinates based on selection
     if selected_zone_map == "All Zones (Overview)":
-        map_df = df_zones.iloc[1:].copy() # show all individual zones
-        current_lat, current_lon, current_zoom = 7.3825, 124.2811, 12
+        map_df = df_zones.iloc[1:].copy()
+        current_lat, current_lon, current_zoom = 7.3825, 124.2811, 13
     else:
         match_row = df_zones[df_zones['Zone'] == selected_zone_map].iloc[0]
         map_df = pd.DataFrame([match_row])
-        current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], match_row['zoom']
+        current_lat, current_lon, current_zoom = match_row['lat'], match_row['lon'], int(match_row['zoom'])
 
-    # Render Google Earth Satellite Map using Plotly Figure & ArcGIS World Imagery tiles
-    fig_map = go.Figure(go.Scattermapbox(
-        lat=map_df['lat'],
-        lon=map_df['lon'],
-        mode='markers+text',
-        text=map_df['Zone'],
-        textposition="top right",
-        marker=dict(size=14, color='#00ffcc', symbol='marker')
-    ))
-    
-    fig_map.update_layout(
-        mapbox=dict(
-            style="white-bg",
-            center=dict(lat=current_lat, lon=current_lon),
-            zoom=int(current_zoom),
-            layers=[{
-                "sourcetype": "raster",
-                "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-                "below": "traces"
-            }]
-        ),
-        margin={"r":0,"t":0,"l":0,"b":0},
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        height=550
+    # Create Folium Map with Esri World Imagery (Google Earth Satellite View)
+    m = folium.Map(
+        location=[current_lat, current_lon],
+        zoom_start=current_zoom,
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri World Imagery (Google Earth Style)',
+        control_scale=True
     )
-    
-    st.plotly_chart(fig_map, use_container_width=True)
+
+    # Add markers for zones
+    for _, row in map_df.iterrows():
+        folium.Marker(
+            location=[row['lat'], row['lon']],
+            popup=f"<b>{row['Zone']}</b><br>{row['desc']}",
+            tooltip=row['Zone'],
+            icon=folium.Icon(color="darkblue", icon="info-sign")
+        ).add_to(m)
+
+    # Render map in Streamlit
+    st_folium(m, width=1300, height=550)
     
     # Display Zone Information Card
     active_desc = df_zones[df_zones['Zone'] == selected_zone_map]['desc'].values[0]
