@@ -1,8 +1,0 @@
-zone_name,lat,lon,zone_type,area_hectares
-Port Operations Zone (Existing),7.3852,124.2561,POZ,45.2
-Port Operations Zone (Reclaimed),7.3875,124.2580,POZ,25.0
-RORO Port Development Zone,7.3830,124.2545,RORO,12.5
-Freeport Civic and Commerce Hub,7.3900,124.2610,Commercial,30.0
-Planned Unit Development (PUD),7.3930,124.2650,PUD,55.0
-Staff Housing Cluster,7.3960,124.2690,Residential,18.4
-Mangrove Ecopark,7.3810,124.2510,Conservation,40.0
