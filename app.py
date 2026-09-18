@@ -332,7 +332,9 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Location")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Location & Masterplan Vision")
+    
+    # Geographic Map Section
     pfez_coords = pd.DataFrame({
         'lat': [7.3825],
         'lon': [124.2811],
@@ -341,6 +343,38 @@ with tab5:
     })
     st.map(pfez_coords, latitude='lat', longitude='lon', zoom=11, size=50)
     
+    st.markdown("---")
+    st.subheader("🏗️ Master Development Vision 2040 — Interactive Site Integration")
+    st.markdown("Visualizing the full development scenario layout, zone callouts, and key land use sectors.")
+    
+    # Masterplan Image Integration controls
+    m_col1, m_col2, m_col3 = st.columns([2, 2, 1])
+    with m_col1:
+        masterplan_zoom = st.slider("Masterplan Image Zoom (%)", min_value=50, max_value=200, value=100, step=10, key="masterplan_zoom")
+    with m_col2:
+        selected_zone_focus = st.selectbox(
+            "Highlight Masterplan Zone",
+            ["All Zones", "Future Expansion Area", "Administrative Core", "Utilities", "Port Support & Commerce Hub", "Ecogreen Park", "Staff Housing Cluster", "Freeport Civic & Commerce Hub", "Existing Port Operation Zone", "Port Operation Zone (Reclaimed)", "RORO Port Development Zone", "Mangrove Ecopark"]
+        )
+    with m_col3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"**Focus:** `{selected_zone_focus}`")
+
+    # Load masterplan image if available
+    masterplan_img_filename = "IMG_1214 (1).jpg"
+    if os.path.exists(masterplan_img_filename):
+        with open(masterplan_img_filename, "rb") as image_file:
+            encoded_masterplan = base64.b64encode(image_file.read()).decode()
+            
+        st.markdown(f'''
+            <div style="width: 100%; height: 600px; overflow: auto; text-align: center; background: #0e1117; padding: 20px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);">
+                <img src="data:image/jpeg;base64,{encoded_masterplan}" style="width: {masterplan_zoom}%; max-width: none; height: auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+            </div>
+        ''', unsafe_allow_html=True)
+        st.caption(f"Master Development Vision — Full Development Scenario 2040 (Showing: {selected_zone_focus})")
+    else:
+        st.info("💡 Tip: Place `IMG_1214 (1).jpg` in your root repository directory to render the full Master Development Vision 2040 graphic interactively here.")
+
     st.markdown("---")
     st.subheader("📋 Official PFEZ-SDPIP Decision Matrix")
     if not df_filtered.empty:
@@ -353,4 +387,4 @@ with tab5:
         
         buf = io.StringIO()
         disp.to_csv(buf, index=False)
-        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_Executive_Matrix.csv", mime="text/css")
+        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_Executive_Matrix.csv", mime="text/csv")
