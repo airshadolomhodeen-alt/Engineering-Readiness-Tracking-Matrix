@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 import os
+import base64
 import fitz  # PyMuPDF for robust PDF book viewing
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
@@ -259,7 +260,7 @@ with tab3:
 
 with tab4:
     st.subheader("📖 Masterplan Book Viewer (Phase 3 Site Development Plan)")
-    st.markdown("Interactive page-by-page document reader with zoom and resolution controls for your masterplan PDF.")
+    st.markdown("Interactive document viewer with smooth zoom percentage control (50% to 200%).")
     
     pdf_filename = "PHASE 3 - Site Development Plan and Investment Program.pdf"
     if os.path.exists(pdf_filename):
@@ -267,34 +268,31 @@ with tab4:
             doc = fitz.open(pdf_filename)
             total_pages = len(doc)
             
-            # Zoom and Navigation Controls
-            col_b1, col_b2, col_b3 = st.columns([1, 1, 2])
+            # Interactive Controls for Page Navigation and Zoom percentage
+            col_b1, col_b2 = st.columns([1, 1])
             with col_b1:
                 page_num = st.number_input("Page Number", min_value=1, max_value=total_pages, value=1, step=1)
             with col_b2:
-                zoom_option = st.selectbox(
-                    "Zoom / Resolution Level", 
-                    ["Standard (100 DPI)", "Medium (150 DPI)", "High Zoom (220 DPI)", "Ultra Zoom (300 DPI)"], 
-                    index=1
-                )
+                zoom_pct = st.slider("Zoom View Percentage (%)", min_value=50, max_value=200, value=100, step=10)
             
-            dpi_mapping = {
-                "Standard (100 DPI)": 100,
-                "Medium (150 DPI)": 150,
-                "High Zoom (220 DPI)": 220,
-                "Ultra Zoom (300 DPI)": 300
-            }
-            selected_dpi = dpi_mapping[zoom_option]
-            
+            # Render high-resolution page image so zooming in remains crystal clear
             page = doc.load_page(page_num - 1)
-            pix = page.get_pixmap(dpi=selected_dpi)
+            pix = page.get_pixmap(dpi=200)
             img_bytes = pix.tobytes("png")
+            encoded_img = base64.b64encode(img_bytes).decode()
             
-            st.image(img_bytes, caption=f"Page {page_num} of {total_pages} — Zoom Resolution: {selected_dpi} DPI", use_container_width=True)
+            # Responsive HTML Container with dynamic zoom width scaling and scrollbars
+            st.markdown(f'''
+                <div style="width: 100%; height: 700px; overflow: auto; text-align: center; background: #0e1117; padding: 25px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
+                    <img src="data:image/png;base64,{encoded_img}" style="width: {zoom_pct}%; max-width: none; height: auto; transition: width 0.15s ease-in-out; border-radius: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);" />
+                </div>
+            ''', unsafe_allow_html=True)
+            
+            st.caption(f"Currently viewing Page {page_num} of {total_pages} at {zoom_pct}% scale.")
         except Exception as ex:
             st.error(f"Error reading PDF pages: {ex}")
     else:
-        st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory. Please confirm it is committed to GitHub.")
+        st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
     st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Geographic Location")
