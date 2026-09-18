@@ -342,12 +342,12 @@ with tab5:
     st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Multi-Layer GIS Map")
     st.markdown("Interactive aerial satellite view with all your exported QGIS vector layers (Polygons, Lines, and Points) fully integrated.")
     
-    # Initialize Folium Map centered on PFEZ
+    # Initialize Folium Map centered on PFEZ with clean custom attribution text
     m = folium.Map(
         location=[7.3825, 124.2811],
         zoom_start=15,
         tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attr='Esri World Imagery (Google Earth Style)',
+        attr='PFEZ Satellite Basemap',
         control_scale=True
     )
 
@@ -422,8 +422,10 @@ with tab5:
     # Add QGIS-style Layer Control box (expanded so checkboxes are fully visible)
     folium.LayerControl(collapsed=False).add_to(m)
     
-    # Render interactive map inside Streamlit
-    st_folium(m, width=1300, height=550)
+    # Render interactive map inside a professional medium-sized centered column layout
+    map_col1, map_col2, map_col3 = st.columns([1, 8, 1])
+    with map_col2:
+        st_folium(m, width=950, height=500)
 
     # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
