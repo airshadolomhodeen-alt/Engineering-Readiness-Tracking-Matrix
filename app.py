@@ -226,7 +226,6 @@ with tab2:
     st.markdown("Credit committee risk evaluation module simulating cost overruns, revenue slippages, and multi-variable PCA risk variance.")
     
     if not df_filtered.empty and len(df_filtered) > 1:
-        # Interactive Stress Test Controls
         st.markdown("#### ⚙️ Interactive Stress-Test Parameters (Credit Committee Simulator)")
         st1, st2 = st.columns(2)
         with st1:
@@ -405,19 +404,20 @@ with tab6:
         </style>
     """, unsafe_allow_html=True)
 
-    # Initialize Folium Map centered on PFEZ with clean custom attribution text
+    # Initialize Folium Map centered on PFEZ with zoom_start=13 so the whole PFEZ location & region are visible immediately
     m = folium.Map(
         location=[7.3825, 124.2811],
-        zoom_start=15,
+        zoom_start=13,
         tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         attr='PFEZ Satellite Basemap',
         control_scale=True
     )
 
-    # Master dictionary mapping files, colors, opacity, and including PFEZ Boundaries
+    # Master dictionary mapping files, colors, opacity, including PFEZ Boundaries & Storm Surge layer
     qgis_layers_map = {
         "PFEZ Boundaries": {"file": "PFEZ Boundaries.geojson", "color": "#ff00ff", "fill": "#ff00ff", "opacity": 0.15},
         "PFEZ Masterplan Boundary": {"file": "PFEZ-MDP.geojson", "color": "#00ffcc", "fill": "#00ffcc", "opacity": 0.15},
+        "Maguindanao Storm Surge": {"file": "Maguindanao StormSurge.geojson", "color": "#0055ff", "fill": "#0055ff", "opacity": 0.25},
         "Port Facility": {"file": "Port Facility.geojson", "color": "#33ccff", "fill": "#33ccff", "opacity": 0.6},
         "Drainage System": {"file": "Drainage system.geojson", "color": "#19d3f3", "fill": "#19d3f3", "opacity": 0.5},
         "Gate Entrance": {"file": "Gate Entrance.geojson", "color": "#ffcc00", "fill": "#ffcc00", "opacity": 0.8},
@@ -497,7 +497,6 @@ with tab6:
         
         with col_g1:
             st.markdown("#### 📅 Dynamic Project Portfolio Gantt Chart")
-            # Filter Gantt to specific sector or top projects to avoid vertical squeezing
             gantt_sectors = ["All Sectors"] + sorted(df_filtered['Sector'].unique().tolist())
             selected_gantt_sector = st.selectbox("Filter Gantt Timeline by Sector:", gantt_sectors)
             
