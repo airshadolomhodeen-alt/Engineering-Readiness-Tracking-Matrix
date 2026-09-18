@@ -38,7 +38,6 @@ st.markdown(
 # 2. Data Pipeline & Caching
 @st.cache_data
 def load_data():
-  # Load Masterplan Projects CSV with correct encoding
   df_master = pd.DataFrame()
   for enc in ["cp1252", "utf-8", "latin1"]:
     try:
@@ -48,15 +47,19 @@ def load_data():
       continue
   if df_master.empty:
     df_master = pd.DataFrame(
-        columns=["Project No.", "Title", "Sector", "Category", "Estimate Amount"]
+        columns=[
+            "PROJECT NO.",
+            "PROJECT TITLE",
+            "SECTOR",
+            "CATEGORY",
+            "ESTIMATE AMOUNT",
+        ]
     )
 
-  # Drop unnamed columns if present
   df_master = df_master.loc[
       :, ~df_master.columns.str.contains("^Unnamed", case=False)
   ]
 
-  # Load Multi-sheet Excel Proposals
   proposals_list = []
   try:
     excel_file = pd.ExcelFile("MTIT_AIP28_New_Proposals.xlsx")
@@ -131,7 +134,6 @@ def clean_and_standardize(df, source_type="Masterplan"):
 
   df = df.rename(columns=col_map)
 
-  # Fallbacks for missing required columns
   if "Project_No" not in df.columns:
     df["Project_No"] = [f"PRJ-{i+1:03d}" for i in range(len(df))]
   if "Title" not in df.columns:
@@ -145,7 +147,6 @@ def clean_and_standardize(df, source_type="Masterplan"):
   if "Funding_Source" not in df.columns:
     df["Funding_Source"] = source_type
 
-  # Clean numeric fields
   if df["Estimate_Amount"].dtype == object:
     df["Estimate_Amount"] = (
         df["Estimate_Amount"]
@@ -175,67 +176,24 @@ def clean_and_standardize(df, source_type="Masterplan"):
 df_master_clean = clean_and_standardize(df_master, "Masterplan")
 df_proposals_clean = clean_and_standardize(df_proposals, "New Proposal")
 
-df_master_clean = df_master_clean.reset_index(drop=True)
-df_proposals_clean = df_proposals_clean.reset_index(drop=True)
-
 df_combined = pd.concat(
     [df_master_clean, df_proposals_clean], ignore_index=True, axis=0
 )
 
+# 3. Sidebar Layout & Disclaimer
+st.sidebar.header("🏛️ Governance & Policy Hub")
 
-# Automatic Committee Mapping
-def assign_committee(row):
-  sec = str(row["Sector"]).lower()
-  title = str(row["Title"]).lower()
-  if (
-      "transport" in sec
-      or "road" in sec
-      or "bridge" in sec
-      or "transport" in title
-  ):
-    return "Transportation Sub-Committee"
-  elif (
-      "international" in sec
-      or "foreign" in sec
-      or "oda" in sec
-      or "trade" in sec
-  ):
-    return "International Development Sectoral Working Group (IDSWG)"
-  elif (
-      "infrastructure" in sec
-      or "energy" in sec
-      or "water" in sec
-      or "construct" in sec
-  ):
-    return "Infrastructure Development Committee (IDCom)"
-  else:
-    return "Regional Land Use Committee (RLUC)"
-
-
-df_combined["Assigned_Committee"] = df_combined.apply(assign_committee, axis=1)
-
-# 3. Sidebar Layout & Committee Selector
-st.sidebar.header("🏛️ Governance & Committee Hub")
-
-committee_options = [
-    "Regional Land Use Committee (RLUC)",
-    "Infrastructure Development Committee (IDCom)",
-    "International Development Sectoral Working Group (IDSWG)",
-    "Transportation Sub-Committee",
-]
-
-selected_committee = st.sidebar.selectbox(
-    "Select Committee Scope", committee_options
+st.sidebar.markdown(
+    """
+    > **Official Disclaimer:** 
+    > This dashboard serves as a strategic guide for policy makers in **BARMM** (Bangsamoro Autonomous Region in Muslim Mindanao) to evaluate masterplan projects and new proposals.
+    """
 )
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔍 Global Filters")
 
-df_filtered = df_combined[
-    df_combined["Assigned_Committee"] == selected_committee
-].copy()
-if df_filtered.empty:
-  df_filtered = df_combined.copy()  # Fallback
+df_filtered = df_combined.copy()
 
 sectors = sorted(df_filtered["Sector"].dropna().unique().tolist())
 selected_sectors = st.sidebar.multiselect("Sectors", sectors, default=sectors)
@@ -281,20 +239,26 @@ if selected_funding:
   df_filtered = df_filtered[
       df_filtered["Funding_Source"].isin(selected_funding)
   ]
-df_filtered = df_filtered[
-    (df_filtered["Estimate_Amount"] >= budget_range[0])
-    & (df_filtered["Estimate_Amount"] <= budget_range[1])
-]
+if not df_filtered.empty:
+  df_filtered = df_filtered[
+      (df_filtered["Estimate_Amount"] >= budget_range[0])
+      & (df_filtered["Estimate_Amount"] <= budget_range[1])
+  ]
 
-# 4. Top-Level Committee KPIs
-st.title(f"📊 {selected_committee}")
-st.markdown("### Public Sector Governance & Economic Decision-Making Dashboard")
+# 4. Top-Level KPIs
+st.title("📊 BARMM Masterplan & Proposals Decision Dashboard")
+st.markdown(
+    "### Public Sector Governance & Economic Decision-Making Guide for Policy"
+    " Makers"
+)
 st.markdown("---")
 
-total_budget = df_filtered["Estimate_Amount"].sum()
+total_budget = (
+    df_filtered["Estimate_Amount"].sum() if not df_filtered.empty else 0.0
+)
 active_proposals = len(df_filtered)
 avg_project_cost = (
-    df_filtered["Estimate_Amount"].mean() if active_proposals > 0 else 0
+    df_filtered["Estimate_Amount"].mean() if active_proposals > 0 else 0.0
 )
 projected_yield = total_budget * 1.45
 
@@ -312,7 +276,7 @@ st.markdown("---")
 
 # 5. Dashboard Tabs Layout
 tab1, tab2, tab3, tab4 = st.tabs([
-    "📂 Committee Portfolio Overview",
+    "📂 Portfolio Overview",
     "📈 Revenue & Economic Projections",
     "🤖 Predictive Modeling & PCA",
     "📋 Decision-Making Matrix Table",
@@ -356,7 +320,7 @@ with tab2:
   st.markdown(
       """
     > **Fiscal Sustainability & Resource Prioritization:** 
-    > Rigorous evaluation of Net Present Value (NPV) and Benefit-Cost Ratios (BCR) ensures public funds are channeled toward projects yielding the highest socio-economic returns, minimizing fiscal vulnerability and promoting long-term regional development.
+    > Rigorous evaluation of Net Present Value (NPV) and Benefit-Cost Ratios (BCR) ensures public funds are channeled toward projects yielding the highest socio-economic returns in BARMM.
     """
   )
 
@@ -435,7 +399,7 @@ with tab4:
   st.subheader("Decision-Making Matrix Table")
   st.markdown(
       "Examine detailed project attributes and export selected subsets for"
-      " official committee resolutions."
+      " official policy resolutions."
   )
 
   if not df_filtered.empty:
@@ -447,7 +411,6 @@ with tab4:
         "Estimate_Amount",
         "Source",
         "Funding_Source",
-        "Assigned_Committee",
     ]]
     st.dataframe(display_df, use_container_width=True)
 
@@ -456,7 +419,7 @@ with tab4:
     st.download_button(
         label="📥 Export Filtered Matrix as CSV",
         data=csv_buffer.getvalue(),
-        file_name=f"{selected_committee.replace(' ', '_')}_matrix.csv",
+        file_name="BARMM_Policy_Decision_Matrix.csv",
         mime="text/csv",
     )
   else:
