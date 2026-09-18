@@ -371,7 +371,7 @@ with tab5:
         "Street Lights": {"file": "Street Lights.geojson", "color": "#ffff00", "fill": "#ffff00", "opacity": 0.9}
     }
 
-    # Iterate through each layer and handle Point vs Polygon geometries safely
+    # Iterate through each layer and handle Point vs Polygon geometries safely without crashing
     for layer_name, cfg in qgis_layers_map.items():
         file_path = cfg["file"]
         if os.path.exists(file_path):
@@ -381,18 +381,19 @@ with tab5:
                 
                 fg = folium.FeatureGroup(name=layer_name)
                 
-                # Check if features contain point geometries (like Gate Entrance or Street Lights)
-                has_points = any(
-                    feat.get("geometry", {}).get("type") in ["Point", "MultiPoint"]
-                    for feat in geo_data.get("features", [])
-                )
-                
-                if has_points:
-                    # Render point features explicitly as visible CircleMarkers
-                    folium.GeoJson(
-                        geo_data,
-                        marker_function=lambda feature, latlng: folium.CircleMarker(
-                            location=latlng,
+                # Iterate through individual features to style points and polygons natively
+                for feat in geo_data.get("features", []):
+                    geom_type = feat.get("geometry", {}).get("type")
+                    coords = feat.get("geometry", {}).get("coordinates")
+                    
+                    if not coords:
+                        continue
+                        
+                    if geom_type in ["Point", "MultiPoint"]:
+                        # Handle point list vs single point coordinate
+                        pt_coords = coords[0] if geom_type == "MultiPoint" else coords
+                        folium.CircleMarker(
+                            location=[pt_coords[1], pt_coords[0]],
                             radius=6,
                             color=cfg["color"],
                             weight=1.5,
@@ -400,20 +401,19 @@ with tab5:
                             fill_color=cfg["fill"],
                             fill_opacity=cfg["opacity"],
                             tooltip=layer_name
-                        )
-                    ).add_to(fg)
-                else:
-                    # Render polygons and lines normally
-                    folium.GeoJson(
-                        geo_data,
-                        style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
-                            'color': c, 
-                            'weight': 2.5, 
-                            'fillColor': fc, 
-                            'fillOpacity': op
-                        },
-                        tooltip=layer_name
-                    ).add_to(fg)
+                        ).add_to(fg)
+                    else:
+                        # Render polygons and lines normally via standard GeoJson wrapper
+                        folium.GeoJson(
+                            feat,
+                            style_function=lambda x, c=cfg["color"], fc=cfg["fill"], op=cfg["opacity"]: {
+                                'color': c, 
+                                'weight': 2.5, 
+                                'fillColor': fc, 
+                                'fillOpacity': op
+                            },
+                            tooltip=layer_name
+                        ).add_to(fg)
                     
                 fg.add_to(m)
             except Exception as e:
@@ -498,4 +498,4 @@ with tab5:
         
         buf = io.StringIO()
         disp.to_csv(buf, index=False)
-        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_Executive_Matrix.csv", mime="text/csv")
+        st.download_button("📥 Export PFEZ Executive Matrix (CSV)", data=buf.getvalue(), file_name="PFEZ_SDPIP_Executive_Matrix.csv", mime="text/css")
