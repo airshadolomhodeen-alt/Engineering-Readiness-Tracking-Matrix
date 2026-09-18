@@ -79,15 +79,11 @@ def load_pfez_data():
     df_combined['WACC'] = (6.5 + (normalized_cost * 1.2) + np.random.normal(0, 0.2, size=n_total)).clip(6.0, 9.0).round(2)
     df_combined['BCR'] = (1.35 + (normalized_cost * 0.85) + np.random.normal(0, 0.05, size=n_total)).clip(1.25, 2.60).round(2)
     
-    # Assign simulated start/end timeline years and geographic spread around Polloc Port (7.3825, 124.2811)
     start_years = np.random.choice([2026, 2027, 2028, 2029, 2030], size=n_total, p=[0.3, 0.25, 0.2, 0.15, 0.1])
     durations = np.random.choice([1, 2, 3, 4], size=n_total)
     df_combined['Start_Year'] = start_years
     df_combined['End_Year'] = df_combined['Start_Year'] + durations
     
-    df_combined['Latitude'] = 7.3825 + np.random.normal(0, 0.008, size=n_total)
-    df_combined['Longitude'] = 124.2811 + np.random.normal(0, 0.008, size=n_total)
-
     # Run PCA Dimensional Reduction on Financial Parameters
     features = df_combined[['Estimate_Amount', 'WACC', 'IRR', 'BCR']]
     scaler = StandardScaler()
@@ -342,30 +338,19 @@ with tab4:
         st.warning(f"⚠️ Document file '`{pdf_filename}`' not found in repository root directory.")
 
 with tab5:
-    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map (95 Dataset Projects)")
-    st.markdown("High-resolution aerial satellite view centered on Polloc Port, Parang, Maguindanao del Norte, plotting all active filtered dataset projects.")
+    st.subheader("🗺️ Polloc Freeport and Economic Zone (PFEZ) Satellite Map (Clean Aerial View)")
+    st.markdown("High-resolution aerial satellite view centered directly on Polloc Port, Parang, Maguindanao del Norte.")
     
-    if not df_filtered.empty:
-        m = folium.Map(
-            location=[7.3825, 124.2811],
-            zoom_start=14,
-            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            attr='Esri World Imagery (Google Earth Style)',
-            control_scale=True
-        )
+    # Clean map with zero markers/objects
+    m = folium.Map(
+        location=[7.3825, 124.2811],
+        zoom_start=15,
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri World Imagery (Google Earth Style)',
+        control_scale=True
+    )
 
-        for _, row in df_filtered.iterrows():
-            popup_html = f"<b>{row.get('Title', 'Project')}</b><br>Sector: {row.get('Sector', '')}<br>CapEx: ₱{row.get('Estimate_Amount', 0):,.2f}<br>IRR: {row.get('IRR', 0)}%"
-            folium.Marker(
-                location=[row['Latitude'], row['Longitude']],
-                popup=popup_html,
-                tooltip=str(row.get('Title', 'Project')),
-                icon=folium.Icon(color="darkblue", icon="briefcase", prefix="fa")
-            ).add_to(m)
-
-        st_folium(m, width=1300, height=500)
-    else:
-        st.warning("No projects match the current filter criteria for satellite mapping.")
+    st_folium(m, width=1300, height=500)
 
     # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
@@ -377,7 +362,6 @@ with tab5:
         
         with col_g1:
             st.markdown("#### 📅 Dynamic Project Portfolio Gantt Chart")
-            # Select top 25 projects for clean Gantt visualization if filtered set is large
             gantt_df = df_filtered.head(25).copy()
             fig_gantt = px.timeline(
                 gantt_df, 
@@ -394,27 +378,17 @@ with tab5:
 
         with col_g2:
             st.markdown("#### 🔗 Aggregated PERT-CPM Critical Path Network")
-            # Aggregate dataset phases into PERT nodes
-            phase_summary = df_filtered.groupby('Category').agg(
-                Project_Count=('Estimate_Amount', 'count'),
-                Total_CapEx=('Estimate_Amount', 'sum'),
-                Avg_IRR=('IRR', 'mean')
-            ).reset_index()
-
             fig_pert = go.Figure()
             
-            # Nodes for PCM Stages based on dataset categories
             stages = ["1. Programming", "2. Identification", "3. Formulation", "4. Financing", "5. Implementation", "6. M&E Audit"]
             px_coords = [1, 2, 3, 4, 5, 3]
             py_coords = [2, 2, 2, 2, 2, 0.8]
             
-            # Draw edges
             for i in range(len(stages) - 2):
                 fig_pert.add_trace(go.Scatter(
                     x=[px_coords[i], px_coords[i+1]], y=[py_coords[i], py_coords[i+1]],
                     mode='lines', line=dict(width=3, color='#00ffcc'), showlegend=False, hoverinfo='none'
                 ))
-            # M&E loop edges
             fig_pert.add_trace(go.Scatter(x=[px_coords[2], px_coords[5]], y=[py_coords[2], py_coords[5]], mode='lines', line=dict(width=2, color='#19d3f3', dash='dash'), showlegend=False, hoverinfo='none'))
             fig_pert.add_trace(go.Scatter(x=[px_coords[5], px_coords[4]], y=[py_coords[5], py_coords[4]], mode='lines', line=dict(width=2, color='#19d3f3', dash='dash'), showlegend=False, hoverinfo='none'))
 
