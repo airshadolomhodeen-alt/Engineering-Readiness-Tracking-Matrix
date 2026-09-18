@@ -427,10 +427,10 @@ with tab5:
     # Add LayerControl set to collapsed=True so it hides the server URL box completely by default
     folium.LayerControl(collapsed=True).add_to(m)
     
-    # Render interactive map inside a professional medium-sized centered column layout
-    map_col1, map_col2, map_col3 = st.columns([1, 8, 1])
+    # Render interactive map maximized to extra-large width and height across full screen layout
+    map_col1, map_col2, map_col3 = st.columns([0.05, 10.9, 0.05])
     with map_col2:
-        st_folium(m, width=950, height=500)
+        st_folium(m, width=1350, height=720)
 
     # --- Enhanced Gantt Chart & PERT-CPM from Dataset ---
     st.markdown("---")
